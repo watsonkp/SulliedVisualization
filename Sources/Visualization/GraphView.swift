@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct GraphView: View {
+public struct GraphView: View {
     let x: [Double]
     let y: [Int]
     let minX: Double
@@ -11,7 +11,7 @@ struct GraphView: View {
     let xAxis: TimeAxis
     let yAxis: ValueAxis
 
-    var body: some View {
+    public var body: some View {
         GeometryReader { proxy in
             VStack(alignment: HorizontalAlignment.leading, spacing: 0) {
                 HStack(spacing: 0) {
@@ -32,7 +32,7 @@ struct GraphView: View {
         }
     }
 
-    init(x: [Double], y: [Int]) {
+    public init(x: [Double], y: [Int]) {
         self.x = x
         self.y = y
 
