@@ -24,7 +24,8 @@ let package = Package(
         .target(
             name: "Visualization",
             dependencies: [],
-            resources: [.copy("Resources/2021-06-29-13-20-23.json")])
+            resources: [.copy("Resources/2021-06-29-13-20-23.json"),
+                        .copy("Resources/2021-07-03-13-56-44.json")])
 //        .testTarget(
 //            name: "VisualizationTests",
 //            dependencies: ["Visualization"]),
