@@ -21,6 +21,22 @@ struct DataView: View {
         self.positions = positions
     }
 
+    init(width: CGFloat, height: CGFloat, minX: Double, maxX: Double, minY: Double, maxY: Double, xs: [Double], ys: [Double]) {
+        self.width = width
+        self.height = height
+
+        // Use the first n data elements where n is the length of the shortest dimension
+        let count = xs.count > ys.count ? xs.count : ys.count
+
+        var positions = Array(repeating: CGPoint(x: 0, y: 0), count: count)
+        for i in 0..<count {
+            let y = Int(height) - Int(Double(height - 50) * (ys[i] - minY) / (maxY - minY))
+            let x = Int(Double(width) * (xs[i] - minX) / (maxX - minX))
+            positions[i] = CGPoint(x: x, y: y)
+        }
+        self.positions = positions
+    }
+
     var body: some View {
         ZStack {
             ForEach (positions.indices) { index in
