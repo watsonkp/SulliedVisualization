@@ -40,3 +40,11 @@ func parseLocations(_ data: [Record]) -> ([Double], [Double]) {
     let y = data[0].locations.map {$0.latitude}
     return (x, y)
 }
+
+func parseAllLocations(_ data: [Record]) -> [([Double], [Double])] {
+    var locations = [([Double], [Double])]()
+    for datum in data {
+        locations.append((datum.locations.map {$0.longitude}, datum.locations.map {$0.latitude}))
+    }
+    return locations
+}
