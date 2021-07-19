@@ -34,3 +34,9 @@ func parse(_ data: [Record]) -> ([Double], [Int]){
 
     return (x, y)
 }
+
+func parseLocations(_ data: [Record]) -> ([Double], [Double]) {
+    let x = data[0].locations.map {$0.longitude}
+    let y = data[0].locations.map {$0.latitude}
+    return (x, y)
+}
