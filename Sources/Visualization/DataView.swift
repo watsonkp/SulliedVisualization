@@ -4,10 +4,12 @@ struct DataView: View {
     let width: CGFloat
     let height: CGFloat
     let positions: [CGPoint]
+    let color: Color
 
-    init(width: CGFloat, height: CGFloat, minX: Double, maxX: Double, minY: Double, maxY: Double, xs: [Double], ys: [Int]) {
+    init(width: CGFloat, height: CGFloat, minX: Double, maxX: Double, minY: Double, maxY: Double, xs: [Double], ys: [Int], color: Color = Color.blue) {
         self.width = width
         self.height = height
+        self.color = color
 
         // Use the first n data elements where n is the length of the shortest dimension
         let count = xs.count > ys.count ? xs.count : ys.count
@@ -21,9 +23,10 @@ struct DataView: View {
         self.positions = positions
     }
 
-    init(width: CGFloat, height: CGFloat, minX: Double, maxX: Double, minY: Double, maxY: Double, xs: [Double], ys: [Double]) {
+    init(width: CGFloat, height: CGFloat, minX: Double, maxX: Double, minY: Double, maxY: Double, xs: [Double], ys: [Double], color: Color = Color.blue) {
         self.width = width
         self.height = height
+        self.color = color
 
         // Use the first n data elements where n is the length of the shortest dimension
         let count = xs.count > ys.count ? xs.count : ys.count
@@ -42,7 +45,7 @@ struct DataView: View {
             ForEach (positions.indices) { index in
                 Circle()
                     .path(in: CGRect(origin: positions[index], size: CGSize(width: 3, height: 3)))
-                    .fill(Color.blue)
+                    .fill(self.color)
             }
         }.frame(height: height)
     }
