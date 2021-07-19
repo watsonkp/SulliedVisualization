@@ -1,12 +1,12 @@
 import SwiftUI
 
-struct PositionView: View {
+public struct PositionView: View {
     let x: [Double]
     let y: [Double]
     let xRange: (Double, Double)
     let yRange: (Double, Double)
 
-    var body: some View {
+    public var body: some View {
         GeometryReader { proxy in
             DataView(width: proxy.size.width, height: proxy.size.height, minX: xRange.0, maxX: xRange.1, minY: yRange.0, maxY: yRange.1, xs: x, ys: y)
         }
