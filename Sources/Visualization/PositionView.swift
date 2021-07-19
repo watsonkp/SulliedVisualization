@@ -45,7 +45,7 @@ public struct PositionView: View {
         self.ys = projections.map { $0.1 }
 
         self.colors = colors
-        while paths.count > colors.count {
+        while paths.count > self.colors!.count {
             self.colors!.append(contentsOf: colors)
         }
 
