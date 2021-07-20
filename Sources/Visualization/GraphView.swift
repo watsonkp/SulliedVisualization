@@ -1,8 +1,10 @@
 import SwiftUI
 
 public struct GraphView: View {
-    let x: [Double]
-    let y: [Int]
+    let x: [Double]?
+    let y: [Int]?
+    let xs: [[Double]]?
+    let ys: [[Int]]?
     let minX: Double
     let maxX: Double
     let minY: Int
@@ -21,7 +23,13 @@ public struct GraphView: View {
                     // Data area
                     ZStack {
                         GridLineView(width: proxy.size.width, height: proxy.size.height - 50, count: 6)
-                        DataView(width: proxy.size.width - 50, height: proxy.size.height - 50, minX: 0, maxX: 40 * 60, minY: 80, maxY: 200, xs: x, ys: y)
+                        if let x = x, let y = y {
+                            DataView(width: proxy.size.width - 50, height: proxy.size.height - 50, minX: 0, maxX: 40 * 60, minY: 80, maxY: 200, xs: x, ys: y)
+                        } else if let xs = xs, let ys = ys {
+                            ForEach(xs.indices, id: \.self) { index in
+                                DataView(width: proxy.size.width - 50, height: proxy.size.height - 50, minX: 0, maxX: 40 * 60, minY: 80, maxY: 200, xs: xs[index], ys: ys[index])
+                            }
+                        }
                     }
                 }
                 .frame(height: proxy.size.height - 50)
@@ -43,6 +51,25 @@ public struct GraphView: View {
 
         self.xAxis = TimeAxis(min: self.minX, max: self.maxX, count: 5)
         self.yAxis = ValueAxis(min: self.minY, max: self.maxY, count: 5)
+
+        self.xs = nil
+        self.ys = nil
+    }
+
+    public init(data: [([Double], [Int])]) {
+        self.xs = data.map {$0.0}
+        self.ys = data.map {$0.1}
+
+        self.minX = data.map({$0.0.min()!}).min()!
+        self.maxX = data.map({$0.0.max()!}).max()!
+        self.minY = data.map({$0.1.min()!}).min()!
+        self.maxY = data.map({$0.1.max()!}).max()!
+
+        self.xAxis = TimeAxis(min: self.minX, max: self.maxX, count: 5)
+        self.yAxis = ValueAxis(min: self.minY, max: self.maxY, count: 5)
+
+        self.x = nil
+        self.y = nil
     }
 }
 
@@ -51,5 +78,9 @@ struct GraphView_Previews: PreviewProvider {
         let records: [Record] = load("2021-06-29-13-20-23.json")
         let data = parse(records)
         GraphView(x: data.0, y: data.1)
+
+        let splitRecords: [Record] = load("2021-07-03-13-56-44.json")
+        let splitPaths = parseAll(splitRecords)
+        GraphView(data: splitPaths)
     }
 }
