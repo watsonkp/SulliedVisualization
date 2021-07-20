@@ -35,6 +35,14 @@ func parse(_ data: [Record]) -> ([Double], [Int]){
     return (x, y)
 }
 
+func parseAll(_ data: [Record]) -> [([Double], [Int])] {
+    var values = [([Double], [Int])]()
+    for datum in data {
+        values.append((datum.bluetoothValues.map {$0.timeInterval}, datum.bluetoothValues.map {$0.decodedValue}))
+    }
+    return values
+}
+
 func parseLocations(_ data: [Record]) -> ([Double], [Double]) {
     let x = data[0].locations.map {$0.longitude}
     let y = data[0].locations.map {$0.latitude}
