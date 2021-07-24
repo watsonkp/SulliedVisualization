@@ -16,7 +16,7 @@ struct DataView: View {
 
         var positions = Array(repeating: CGPoint(x: 0, y: 0), count: count)
         for i in 0..<count {
-            let y = Int(height) - Int(Double(height - 50) * (Double(ys[i]) - minY) / (maxY - minY))
+            let y = Int(height) - Int(Double(height) * (Double(ys[i]) - minY) / (maxY - minY))
             let x = Int(Double(width) * (xs[i] - minX) / (maxX - minX))
             positions[i] = CGPoint(x: x, y: y)
         }
@@ -33,7 +33,7 @@ struct DataView: View {
 
         var positions = Array(repeating: CGPoint(x: 0, y: 0), count: count)
         for i in 0..<count {
-            let y = Int(height) - Int(Double(height - 50) * (ys[i] - minY) / (maxY - minY))
+            let y = Int(height) - Int(Double(height) * (ys[i] - minY) / (maxY - minY))
             let x = Int(Double(width) * (xs[i] - minX) / (maxX - minX))
             positions[i] = CGPoint(x: x, y: y)
         }

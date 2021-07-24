@@ -20,24 +20,28 @@ public struct GraphView: View {
             VStack(alignment: HorizontalAlignment.leading, spacing: 0) {
                 HStack(spacing: 0) {
                     // Y-Axis
-                    yAxis.view(height: proxy.size.height)
-                        .frame(width: 50)
+                    yAxis.view(height: proxy.size.height - 50)
+                        .frame(width: 50, height: proxy.size.height - 50)
                     // Data area
                     ZStack {
-                        GridLineView(width: proxy.size.width, height: proxy.size.height - 50, count: 6)
+                        GridLineView(width: proxy.size.width - 50, height: proxy.size.height - 50, count: 2 * (yAxis.labels.count - 1))
                         if let x = x, let y = y {
-                            DataView(width: proxy.size.width - 50, height: proxy.size.height - 50, minX: 0, maxX: 40 * 60, minY: 80, maxY: 200, xs: x, ys: y, color: color!)
+                            DataView(width: proxy.size.width - 50, height: proxy.size.height - 50, minX: 0, maxX: 60.0 * xAxis.maximum, minY: yAxis.minimum, maxY: yAxis.maximum, xs: x, ys: y, color: color!)
                         } else if let xs = xs, let ys = ys {
                             ForEach(xs.indices, id: \.self) { index in
-                                DataView(width: proxy.size.width - 50, height: proxy.size.height - 50, minX: 0, maxX: 40 * 60, minY: 80, maxY: 200, xs: xs[index], ys: ys[index], color: colors![index])
+                                DataView(width: proxy.size.width - 50, height: proxy.size.height - 50, minX: 0, maxX: 60.0 * xAxis.maximum, minY: yAxis.minimum, maxY: yAxis.maximum, xs: xs[index], ys: ys[index], color: colors![index])
                             }
                         }
                     }
+                    .frame(width: proxy.size.width - 50)
                 }
                 .frame(height: proxy.size.height - 50)
 
                 // X-Axis
-                xAxis.view(width: proxy.size.width, height: proxy.size.height)
+                HStack {
+                    Spacer().frame(width: 50, height: 50)
+                    xAxis.view(width: proxy.size.width - 50, height: 50)
+                }
             }
         }
     }

@@ -13,6 +13,8 @@ struct AxisLabel: Identifiable {
 
 struct ValueAxis {
     let labels: [AxisLabel]
+    let minimum: Double
+    let maximum: Double
 
     // Count parameter is a maximum
     init(min: Int, max: Int, count: Int) {
@@ -23,6 +25,9 @@ struct ValueAxis {
         let start = min / niceStep * niceStep
         let end = (max + niceStep) / niceStep * niceStep
 
+        self.minimum = Double(start)
+        self.maximum = Double(end) + 0.25 * Double(step)
+
         let values = stride(from: start, through: end, by: niceStep)
         self.labels = values.map { value in
             AxisLabel(value)
@@ -32,25 +37,26 @@ struct ValueAxis {
     func view(height: CGFloat) -> some View {
         HStack(spacing: 0) {
             VStack(spacing: 0) {
+                let labelHeight = height / (CGFloat(labels.count) - 0.75)
                 Text(self.labels.last!.label)
                     .frame(width: 50,
-                           height: 50,
+                           height: labelHeight / 4,
                            alignment: Alignment.bottom)
                 ForEach(self.labels.reversed().suffix(from: 1)) { label in
                     Text(label.label)
                         .frame(width: 50,
-                           height: CGFloat(Int(height - 100) / (labels.count - 1)),
+                           height: labelHeight,
                            alignment: Alignment.bottom)
                 }
             }
             Path { path in
                 path.move(to: CGPoint(x: 0, y: 0))
-                path.addLine(to: CGPoint(x: 0, y: height - 50))
+                path.addLine(to: CGPoint(x: 0, y: height))
             }
             .stroke()
             .frame(width: 1)
         }
-        .frame(height: height - 50)
+        .frame(height: height)
     }
 }
 
