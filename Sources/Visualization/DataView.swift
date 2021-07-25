@@ -23,7 +23,7 @@ struct DataView: View {
         self.positions = positions
     }
 
-    init(width: CGFloat, height: CGFloat, minX: Double, maxX: Double, minY: Double, maxY: Double, xs: [Double], ys: [Double], color: Color = Color.blue) {
+    init(width: CGFloat, height: CGFloat, minX: Double, maxX: Double, minY: Double, maxY: Double, xs: [Double], ys: [Double], color: Color = Color.blue, equalScaling: Bool = false) {
         self.width = width
         self.height = height
         self.color = color
@@ -32,11 +32,28 @@ struct DataView: View {
         let count = xs.count > ys.count ? xs.count : ys.count
 
         var positions = Array(repeating: CGPoint(x: 0, y: 0), count: count)
-        for i in 0..<count {
-            let y = Int(height) - Int(Double(height) * (ys[i] - minY) / (maxY - minY))
-            let x = Int(Double(width) * (xs[i] - minX) / (maxX - minX))
-            positions[i] = CGPoint(x: x, y: y)
+        if equalScaling {
+            // When equalScaling is set to true the x and y values are scaled with the same ratio
+            let xScaling = Double(width) / (maxX - minX)
+            let yScaling = Double(height) / (maxY - minY)
+            let scaling = xScaling < yScaling ? xScaling : yScaling
+            let xOffset = (Double(width) - scaling * (maxX - minX)) / 2
+            let yOffset = (Double(height) - scaling * (maxY - minY)) / 2
+
+            for i in 0..<count {
+                let x = Int(xOffset) + Int(scaling * (xs[i] - minX))
+                let y = Int(Double(height) - yOffset) - Int(scaling * (ys[i] - minY))
+                positions[i] = CGPoint(x: x, y: y)
+            }
+        } else {
+            // When equalScaling is set to false the x and y values are scaled independently to fill the frame
+            for i in 0..<count {
+                let x = Int(Double(width) * (xs[i] - minX) / (maxX - minX))
+                let y = Int(height) - Int(Double(height) * (ys[i] - minY) / (maxY - minY))
+                positions[i] = CGPoint(x: x, y: y)
+            }
         }
+
         self.positions = positions
     }
 

@@ -14,11 +14,11 @@ public struct PositionView: View {
     public var body: some View {
         GeometryReader { proxy in
             if let xData = x, let yData = y {
-                DataView(width: proxy.size.width, height: proxy.size.height, minX: xRange.0, maxX: xRange.1, minY: yRange.0, maxY: yRange.1, xs: xData, ys: yData, color: color!)
+                DataView(width: proxy.size.width, height: proxy.size.height, minX: xRange.0, maxX: xRange.1, minY: yRange.0, maxY: yRange.1, xs: xData, ys: yData, color: color!, equalScaling: true)
             } else if let xData = xs, let yData = ys {
                 ZStack {
                     ForEach(xData.indices, id: \.self) { i in
-                        DataView(width: proxy.size.width, height: proxy.size.height, minX: xRange.0, maxX: xRange.1, minY: yRange.0, maxY: yRange.1, xs: xData[i], ys: yData[i], color: colors![i])
+                        DataView(width: proxy.size.width, height: proxy.size.height, minX: xRange.0, maxX: xRange.1, minY: yRange.0, maxY: yRange.1, xs: xData[i], ys: yData[i], color: colors![i], equalScaling: true)
                     }
                 }
             }
