@@ -6,21 +6,48 @@ struct DataView: View {
     let positions: [CGPoint]
     let color: Color
 
-    init(width: CGFloat, height: CGFloat, minX: Double, maxX: Double, minY: Double, maxY: Double, xs: [Double], ys: [Int], color: Color = Color.blue) {
+    enum FunctionType {
+        case wellDefined
+        case multivalued
+    }
+
+    struct Position : Hashable {
+        let x: Int
+        let y: Int
+    }
+
+    init(width: CGFloat, height: CGFloat, minX: Double, maxX: Double, minY: Double, maxY: Double, xs: [Double], ys: [Int], color: Color = Color.blue, fType: FunctionType = .wellDefined) {
         self.width = width
         self.height = height
         self.color = color
 
         // Use the first n data elements where n is the length of the shortest dimension
-        let count = xs.count > ys.count ? xs.count : ys.count
+        switch fType {
+        case .wellDefined:
+            var pixels: [Int: [Int]] = [:]
+            for (index, value) in xs.enumerated() {
+                let x = Int(Double(width) * (value - minX) / (maxX - minX))
+                if var pixel = pixels[x] {
+                    pixel.append(ys[index])
+                    pixels[x] = pixel
+                } else {
+                    pixels[x] = [ys[index]]
+                }
+            }
 
-        var positions = Array(repeating: CGPoint(x: 0, y: 0), count: count)
-        for i in 0..<count {
-            let y = Int(height) - Int(Double(height) * (Double(ys[i]) - minY) / (maxY - minY))
-            let x = Int(Double(width) * (xs[i] - minX) / (maxX - minX))
-            positions[i] = CGPoint(x: x, y: y)
+            self.positions = pixels.map { (key, value) in
+                let mean = Double(value.reduce(0, { $0 + $1 })) / Double(value.count)
+                return CGPoint(x: key, y: Int(height) - Int(Double(height) * (mean - minY) / (maxY - minY)))
+            }
+        case .multivalued:
+            var pixels = Set<Position>()
+            for (index, value) in xs.enumerated() {
+                let x = Int(Double(width) * (value - minX) / (maxX - minX))
+                let y = Int(height) - Int(Double(height) * (Double(ys[index]) - minY) / (maxY - minY))
+                pixels.insert(Position(x: x, y: y))
+            }
+            self.positions = pixels.map { CGPoint(x: $0.x, y: $0.y) }
         }
-        self.positions = positions
     }
 
     init(width: CGFloat, height: CGFloat, minX: Double, maxX: Double, minY: Double, maxY: Double, xs: [Double], ys: [Double], color: Color = Color.blue, equalScaling: Bool = false) {
@@ -31,7 +58,7 @@ struct DataView: View {
         // Use the first n data elements where n is the length of the shortest dimension
         let count = xs.count > ys.count ? xs.count : ys.count
 
-        var positions = Array(repeating: CGPoint(x: 0, y: 0), count: count)
+        var pixels = Set<Position>()
         if equalScaling {
             // When equalScaling is set to true the x and y values are scaled with the same ratio
             let xScaling = Double(width) / (maxX - minX)
@@ -43,18 +70,17 @@ struct DataView: View {
             for i in 0..<count {
                 let x = Int(xOffset) + Int(scaling * (xs[i] - minX))
                 let y = Int(Double(height) - yOffset) - Int(scaling * (ys[i] - minY))
-                positions[i] = CGPoint(x: x, y: y)
+                pixels.insert(Position(x: x, y: y))
             }
         } else {
             // When equalScaling is set to false the x and y values are scaled independently to fill the frame
             for i in 0..<count {
                 let x = Int(Double(width) * (xs[i] - minX) / (maxX - minX))
                 let y = Int(height) - Int(Double(height) * (ys[i] - minY) / (maxY - minY))
-                positions[i] = CGPoint(x: x, y: y)
+                pixels.insert(Position(x: x, y: y))
             }
         }
-
-        self.positions = positions
+        self.positions = pixels.map { CGPoint(x: $0.x, y: $0.y) }
     }
 
     var body: some View {
