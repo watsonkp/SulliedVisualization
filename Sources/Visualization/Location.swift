@@ -14,8 +14,8 @@ class Location {
     // Project an array of latitude and longitude points using the Mercator projection
     // https://mathworld.wolfram.com/MercatorProjection.html
     static func project(latitude: [Double], longitude: [Double]) -> ([Double], [Double]) {
-        let ys = longitude.map { toRadians($0) }
-        let xs = latitude.map { log(tan(Double.pi / 4 + toRadians($0) / 2)) }
+        let xs = longitude.map { toRadians($0) }
+        let ys = latitude.map { log(tan(Double.pi / 4 + toRadians($0) / 2)) }
         return (xs, ys)
     }
 

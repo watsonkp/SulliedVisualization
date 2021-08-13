@@ -40,7 +40,7 @@ public struct PositionView: View {
     }
 
     public init(paths: [([Double], [Double])], colors: [Color] = [Color.blue]) {
-        let projections = paths.map { Location.project(latitude: $0.0, longitude: $0.1) }
+        let projections = paths.map { Location.project(latitude: $0.1, longitude: $0.0) }
         self.xs = projections.map { $0.0 }
         self.ys = projections.map { $0.1 }
 
