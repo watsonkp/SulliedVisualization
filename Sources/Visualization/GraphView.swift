@@ -11,6 +11,8 @@ public struct GraphView: View {
     let maxY: Int
     let color: Color?
     var colors: [Color]?
+    let showZones: Bool
+    let zoneMax: Int
 
     let xAxis: TimeAxis
     let yAxis: ValueAxis
@@ -24,6 +26,10 @@ public struct GraphView: View {
                         .frame(width: 50, height: proxy.size.height - 50)
                     // Data area
                     ZStack {
+                        // Optionally color regions of the graph in relation to a maximum value
+                        if showZones {
+                            ZoneView(width: proxy.size.width - 50, height: proxy.size.height - 50, max: zoneMax, valueRange: (Int(yAxis.minimum), Int(yAxis.maximum)))
+                        }
                         GridLineView(width: proxy.size.width - 50, height: proxy.size.height - 50, count: 2 * (yAxis.labels.count - 1))
                         if let x = x, let y = y {
                             DataView(width: proxy.size.width - 50, height: proxy.size.height - 50, minX: 0, maxX: 60.0 * xAxis.maximum, minY: yAxis.minimum, maxY: yAxis.maximum, xs: x, ys: y, color: color!)
@@ -46,7 +52,7 @@ public struct GraphView: View {
         }
     }
 
-    public init(x: [Double], y: [Int], color: Color = Color.blue) {
+    public init(x: [Double], y: [Int], color: Color = Color.primary, showZones: Bool = false, zoneMax: Int = 220) {
         self.x = x
         self.y = y
 
@@ -63,9 +69,12 @@ public struct GraphView: View {
         self.xs = nil
         self.ys = nil
         self.colors = nil
+
+        self.showZones = showZones
+        self.zoneMax = zoneMax
     }
 
-    public init(data: [([Double], [Int])], colors: [Color] = [Color.blue]) {
+    public init(data: [([Double], [Int])], colors: [Color] = [Color.primary], showZones: Bool = false, zoneMax: Int = 220) {
         self.xs = data.map {$0.0}
         self.ys = data.map {$0.1}
 
@@ -85,6 +94,9 @@ public struct GraphView: View {
         self.x = nil
         self.y = nil
         self.color = nil
+
+        self.showZones = showZones
+        self.zoneMax = zoneMax
     }
 }
 
@@ -92,10 +104,12 @@ struct GraphView_Previews: PreviewProvider {
     static var previews: some View {
         let records: [Record] = load("2021-06-29-13-20-23.json")
         let data = parse(records)
-        GraphView(x: data.0, y: data.1)
+        GraphView(x: data.0, y: data.1, color: Color.primary, showZones: true)
+        GraphView(x: data.0, y: data.1, color: Color.primary, showZones: true, zoneMax: 192)
 
         let splitRecords: [Record] = load("2021-07-03-13-56-44.json")
         let splitPaths = parseAll(splitRecords)
         GraphView(data: splitPaths, colors: [Color.red, Color.green, Color.blue])
+        GraphView(data: splitPaths, colors: [Color.primary, Color.purple, Color.orange], showZones: true, zoneMax: 192)
     }
 }
