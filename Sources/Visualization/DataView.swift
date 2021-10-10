@@ -61,9 +61,18 @@ struct DataView: View {
         var pixels = Set<Position>()
         if equalScaling {
             // When equalScaling is set to true the x and y values are scaled with the same ratio
-            let xScaling = Double(width) / (maxX - minX)
-            let yScaling = Double(height) / (maxY - minY)
+            var xScaling = Double(width) / (maxX - minX)
+            if xScaling == Double.infinity {
+                // CRASH if maxX == minX etc because it goes to infinity. Example: no movement in location data.
+                xScaling = Double(width) / 10
+            }
+            var yScaling = Double(height) / (maxY - minY)
+            if yScaling == Double.infinity {
+                // CRASH if maxY == minY etc because it goes to infinity. Example: no movement in location data.
+                yScaling = Double(height) / 10
+            }
             let scaling = xScaling < yScaling ? xScaling : yScaling
+            // Calculate offsets to center data horizontally and vertically
             let xOffset = (Double(width) - scaling * (maxX - minX)) / 2
             let yOffset = (Double(height) - scaling * (maxY - minY)) / 2
 
@@ -75,6 +84,7 @@ struct DataView: View {
         } else {
             // When equalScaling is set to false the x and y values are scaled independently to fill the frame
             for i in 0..<count {
+                // TODO: CRASH if maxX == minX etc because it goes to infinity. Example: no movement in location data.
                 let x = Int(Double(width) * (xs[i] - minX) / (maxX - minX))
                 let y = Int(height) - Int(Double(height) * (ys[i] - minY) / (maxY - minY))
                 pixels.insert(Position(x: x, y: y))
