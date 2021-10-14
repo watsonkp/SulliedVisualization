@@ -4,8 +4,8 @@ public struct PositionView: View {
     let x: [Double]?
     let y: [Double]?
     let color: Color?
-    let xRange: (Double, Double)?
-    let yRange: (Double, Double)?
+    let xRange: (Double, Double)
+    let yRange: (Double, Double)
 
     let xs: [[Double]]?
     let ys: [[Double]]?
@@ -14,11 +14,11 @@ public struct PositionView: View {
     public var body: some View {
         GeometryReader { proxy in
             if let xData = x, let yData = y {
-                DataView(width: proxy.size.width, height: proxy.size.height, minX: xRange?.0 ?? 0.0, maxX: xRange?.1 ?? 1.0, minY: yRange?.0 ?? 0.0, maxY: yRange?.1 ?? 1.0, xs: xData, ys: yData, color: color!, equalScaling: true)
+                DataView(width: proxy.size.width, height: proxy.size.height, minX: xRange.0, maxX: xRange.1, minY: yRange.0, maxY: yRange.1, xs: xData, ys: yData, color: color!, equalScaling: true)
             } else if let xData = xs, let yData = ys {
                 ZStack {
                     ForEach(xData.indices, id: \.self) { i in
-                        DataView(width: proxy.size.width, height: proxy.size.height, minX: xRange?.0 ?? 0.0, maxX: xRange?.1 ?? 1.0, minY: yRange?.0 ?? 0.0, maxY: yRange?.1 ?? 1.0, xs: xData[i], ys: yData[i], color: colors![i], equalScaling: true)
+                        DataView(width: proxy.size.width, height: proxy.size.height, minX: xRange.0, maxX: xRange.1, minY: yRange.0, maxY: yRange.1, xs: xData[i], ys: yData[i], color: colors![i], equalScaling: true)
                     }
                 }
             }
@@ -36,14 +36,14 @@ public struct PositionView: View {
            let xMax = x?.max() {
             self.xRange = (xMin, xMax)
         } else {
-            self.xRange = nil
+            self.xRange = (0.0, 1.0)
         }
 
         if let yMin = y?.min(),
            let yMax = y?.max() {
             self.yRange = (yMin, yMax)
         } else {
-            self.yRange = nil
+            self.yRange = (0.0, 1.0)
         }
 
         self.xs = nil
@@ -64,14 +64,14 @@ public struct PositionView: View {
            let xMax = (xs?.compactMap { $0.max() })?.max() {
             self.xRange = (xMin, xMax)
         } else {
-            self.xRange = nil
+            self.xRange = (0.0, 1.0)
         }
 
         if let yMin = (ys?.compactMap { $0.min() })?.min(),
            let yMax = (ys?.compactMap { $0.max() })?.max() {
             self.yRange = (yMin, yMax)
         } else {
-            self.yRange = nil
+            self.yRange = (0.0, 1.0)
         }
 
         self.x = nil
