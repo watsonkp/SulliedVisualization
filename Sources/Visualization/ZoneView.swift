@@ -58,22 +58,27 @@ struct ZoneView: View {
 
 struct SwiftUIView_Previews: PreviewProvider {
     static var previews: some View {
+        // All zones displayed in a limited range
         GeometryReader { proxy in
             ZoneView(width: proxy.size.width, height: proxy.size.height, max: 192, valueRange: (80, 200))
         }
 
+        // All zones displayed
         GeometryReader { proxy in
             ZoneView(width: proxy.size.width, height: proxy.size.height, max: 192, valueRange: (0, 200))
         }
 
+        // Only display higher zones
         GeometryReader { proxy in
             ZoneView(width: proxy.size.width, height: proxy.size.height, max: 192, valueRange: (150, 200))
         }
 
+        // Only display lower zones
         GeometryReader { proxy in
             ZoneView(width: proxy.size.width, height: proxy.size.height, max: 230, valueRange: (80, 200))
         }
 
+        // Only display lower zones. More extreme than previous case.
         GeometryReader { proxy in
             ZoneView(width: proxy.size.width, height: proxy.size.height, max: 192, valueRange: (60, 120))
         }
