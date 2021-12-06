@@ -106,6 +106,9 @@ struct GraphView_Previews: PreviewProvider {
         let data = parse(records)
         GraphView(x: data.0, y: data.1, color: Color.primary, showZones: true)
         GraphView(x: data.0, y: data.1, color: Color.primary, showZones: true, zoneMax: 192)
+        GraphView(x: data.0, y: data.1, color: Color.primary, showZones: true, zoneMax: 192)
+                .background(Color(UIColor.systemBackground))
+                .environment(\.colorScheme, .dark)
 
         let splitRecords: [Record] = load("2021-07-03-13-56-44.json")
         let splitPaths = parseAll(splitRecords)
