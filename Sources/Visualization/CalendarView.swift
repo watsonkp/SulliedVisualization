@@ -5,10 +5,10 @@ import CoreBluetooth
 // Optionally offset the start of the data to correspond to calendar months.
 // Optionally specify an upper limit to correspond to days in the future.
 // TODO: Use foreground and background colors. Added in iOS 15?
-struct CalendarView: View {
+public struct CalendarView: View {
     let data: [Week]
 
-    var body: some View {
+    public var body: some View {
         if !data.isEmpty {
             VStack {
                 ForEach(data) { week in
@@ -54,7 +54,7 @@ struct CalendarView: View {
         }
     }
 
-    init(data: [Bool], startDay: Int = 0, endDay: Int? = nil) {
+    public init(data: [Bool], startDay: Int = 0, endDay: Int? = nil) {
         var weeks = [Week]()
         for index in 0..<((data.count + 6) / 7) {
             let startIndex = max(7 * index - startDay, 0)
