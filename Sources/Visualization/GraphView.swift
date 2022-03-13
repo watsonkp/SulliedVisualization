@@ -19,7 +19,9 @@ public struct GraphView: View {
 
     public var body: some View {
         GeometryReader { proxy in
-            if (x != nil && y != nil) || (xs != nil && ys != nil) {
+            if proxy.size.width == 0.0 || proxy.size.height == 0.0 {
+                EmptyView()
+            } else if (x != nil && y != nil) || (xs != nil && ys != nil) {
                 VStack(alignment: HorizontalAlignment.leading, spacing: 0) {
                     HStack(spacing: 0) {
                         // Y-Axis

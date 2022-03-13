@@ -13,7 +13,9 @@ public struct PositionView: View {
 
     public var body: some View {
         GeometryReader { proxy in
-            if let xData = x, let yData = y {
+            if proxy.size.width == 0.0 || proxy.size.height == 0.0 {
+                EmptyView()
+            } else if let xData = x, let yData = y {
                 DataView(width: proxy.size.width, height: proxy.size.height, minX: xRange.0, maxX: xRange.1, minY: yRange.0, maxY: yRange.1, xs: xData, ys: yData, color: color!, equalScaling: true)
             } else if let xData = xs, let yData = ys {
                 ZStack {
