@@ -209,13 +209,13 @@ struct DynamicGraphView: View {
     }
 
     // Plot integer data
-    init(x: [Double], y: [Int]) {
-        self.init(x: x, y: y.map({ CGFloat($0) }))
+    init(x: [Double], y: [Int], color: Color = Color.accentColor) {
+        self.init(x: x, y: y.map({ CGFloat($0) }), color: color)
     }
 
     // Plot multiple series of integer data
-    init(data: [([Double], [Int])]) {
-        self.init(data: data.map({ ($0.0, $0.1.map({ CGFloat($0) })) }))
+    init(data: [([Double], [Int])], colors: [Color] = [Color.red, Color.green, Color.blue]) {
+        self.init(data: data.map({ ($0.0, $0.1.map({ CGFloat($0) })) }), colors: colors)
     }
 
     private static func createDataPoints(data: [([Double], [Double])], colors: [Color]) -> [DataPoint] {
