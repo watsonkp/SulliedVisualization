@@ -7,7 +7,7 @@ struct AxisOrigin: View {
             Text("0,0")
                 .monospacedDigit()
                 .padding()
-                .foregroundColor(Color.white)
+                .foregroundColor(Color.secondary)
         }
     }
 }
@@ -149,7 +149,7 @@ public struct DynamicGraphView: View {
                         $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.6)))
                         $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.8)))
                         $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.8)))
-                    }, with: .color(.black),
+                    }, with: .color(Color.primary),
                                    lineWidth: 2)
                     // Axes
                     context.stroke(Path {
@@ -159,7 +159,7 @@ public struct DynamicGraphView: View {
                         // x-axis
                         $0.move(to: CGPoint(x: 0, y: Int(size.height)))
                         $0.addLine(to: CGPoint(x: Int(size.width), y: Int(size.height)))
-                    }, with: .color(.black),
+                    }, with: .color(Color.primary),
                                    lineWidth: 2)
                     // X-Axis ticks
                     context.stroke(Path {
@@ -169,7 +169,7 @@ public struct DynamicGraphView: View {
                         $0.addLine(to: CGPoint(x: Int(0.5 * size.width), y: Int(size.height)))
                         $0.move(to: CGPoint(x: Int(0.75 * size.width), y: Int(size.height) - 10))
                         $0.addLine(to: CGPoint(x: Int(0.75 * size.width), y: Int(size.height)))
-                    }, with: .color(.black),
+                    }, with: .color(Color.primary),
                                    lineWidth: 2)
                     // Plot data points that are within the current magnification range
                     for point in dataPoints[visibleStartIndex..<visibleEndIndex] {
