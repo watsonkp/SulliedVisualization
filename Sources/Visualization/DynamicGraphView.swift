@@ -52,7 +52,7 @@ struct Zone {
     let color: Color
 }
 
-struct DynamicGraphView: View {
+public struct DynamicGraphView: View {
     let dataPoints: [DataPoint]
     let colors: [Color]
     let xRange: (CGFloat, CGFloat)
@@ -101,7 +101,7 @@ struct DynamicGraphView: View {
         })
     }
 
-    var body: some View {
+    public var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
                 VStack(spacing: 0) {
@@ -193,7 +193,7 @@ struct DynamicGraphView: View {
     }
 
     // Plot floating point data
-    init(x: [Double], y: [Double], color: Color = Color.accentColor, showZones: Bool = false, zoneMaximum: Double? = nil) {
+    public init(x: [Double], y: [Double], color: Color = Color.accentColor, showZones: Bool = false, zoneMaximum: Double? = nil) {
         self.dataPoints = zip(x, y).map({ DataPoint(x: $0.0, y: $0.1, color: color) })
         self.colors = [color]
         // Include x=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
@@ -222,7 +222,7 @@ struct DynamicGraphView: View {
     }
 
     // Plot multiple series of floating point data
-    init(data: [([Double], [Double])], colors: [Color] = [Color.red, Color.green, Color.blue], showZones: Bool = false, zoneMaximum: Double? = nil) {
+    public init(data: [([Double], [Double])], colors: [Color] = [Color.red, Color.green, Color.blue], showZones: Bool = false, zoneMaximum: Double? = nil) {
         // Repeat the colors array if it is shorter than the data array.
         // Check for an empty colors array
         self.colors = Array(Array(repeating: colors.count > 0 ? colors : [Color.red, Color.green, Color.blue],
@@ -258,12 +258,12 @@ struct DynamicGraphView: View {
     }
 
     // Plot integer data
-    init(x: [Double], y: [Int], color: Color = Color.accentColor, showZones: Bool = false, zoneMaximum: Double? = nil) {
+    public init(x: [Double], y: [Int], color: Color = Color.accentColor, showZones: Bool = false, zoneMaximum: Double? = nil) {
         self.init(x: x, y: y.map({ CGFloat($0) }), color: color, showZones: showZones, zoneMaximum: zoneMaximum)
     }
 
     // Plot multiple series of integer data
-    init(data: [([Double], [Int])], colors: [Color] = [Color.red, Color.green, Color.blue], showZones: Bool = false, zoneMaximum: Double? = nil) {
+    public init(data: [([Double], [Int])], colors: [Color] = [Color.red, Color.green, Color.blue], showZones: Bool = false, zoneMaximum: Double? = nil) {
         self.init(data: data.map({ ($0.0, $0.1.map({ CGFloat($0) })) }), colors: colors, showZones: showZones, zoneMaximum: zoneMaximum)
     }
 
