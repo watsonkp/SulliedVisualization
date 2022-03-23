@@ -46,6 +46,12 @@ struct DataPoint {
     let color: Color
 }
 
+struct Zone {
+    let minimum: CGFloat
+    let maximum: CGFloat
+    let color: Color
+}
+
 struct DynamicGraphView: View {
     let dataPoints: [DataPoint]
     let colors: [Color]
@@ -59,6 +65,7 @@ struct DynamicGraphView: View {
     @State var xLabels: [String]
     @State var yLabels: [String]
     @State var canvasSize: CGSize? = nil
+    let zones: [Zone]?
     var panAndZoom: some Gesture {
         // TODO: Maybe a SequenceGesture? A drag turning into a zoom seems weird. Zooming then dragging seems to make more sense.
         // TODO: Simultaneous implementation might be weird. Maybe it would be fine if the two are handled distinctly and not reliant on each other?
@@ -104,6 +111,34 @@ struct DynamicGraphView: View {
                 }
                 Canvas { context, size in
                     canvasSize = size
+                    // Mark zones on data area if they exist
+                    if let zones = zones {
+                        context.opacity = 0.5
+                        for zone in zones {
+                            // Draw zones that fit in the current visible range
+                            if zone.maximum <= self.visibleYRange.1 && zone.minimum >= self.visibleYRange.0 {
+                                context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: size.height - (zone.maximum - self.visibleYRange.0) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height),
+                                                         size: CGSize(width: size.width, height: (zone.maximum - zone.minimum) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height))),
+                                             with: .color(zone.color))
+                            } else if zone.maximum > self.visibleYRange.1 && zone.minimum >= self.visibleYRange.0 {
+                                // Draw zone with a maximum greater than the current visible range
+                                context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: 0.0),
+                                                         size: CGSize(width: size.width, height: (self.visibleYRange.1 - zone.minimum) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height))),
+                                             with: .color(zone.color))
+                            } else if zone.maximum <= self.visibleYRange.1 && zone.minimum < self.visibleYRange.0 {
+                                // Draw zone with a minimum less than the current visible range
+                                context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: size.height - (zone.maximum - self.visibleYRange.0) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height),
+                                                         size: CGSize(width: size.width, height: (zone.maximum - self.visibleYRange.0) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height))),
+                                             with: .color(zone.color))
+                            } else if zone.maximum > self.visibleYRange.1 && zone.minimum < self.visibleYRange.0 {
+                                // Draw zone that covers the entire visible range
+                                context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: 0.0),
+                                                         size: CGSize(width: size.width, height: size.height))),
+                                             with: .color(zone.color))
+                            }
+                        }
+                        context.opacity = 1.0
+                    }
                     // Y-axis ticks
                     context.stroke(Path {
                         $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.2)))
@@ -157,7 +192,8 @@ struct DynamicGraphView: View {
         }
     }
 
-    init(x: [Double], y: [Double], color: Color = Color.accentColor) {
+    // Plot floating point data
+    init(x: [Double], y: [Double], color: Color = Color.accentColor, showZones: Bool = false, zoneMaximum: Double? = nil) {
         self.dataPoints = zip(x, y).map({ DataPoint(x: $0.0, y: $0.1, color: color) })
         self.colors = [color]
         // Include x=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
@@ -177,10 +213,16 @@ struct DynamicGraphView: View {
                               by: (self.yRange.1 - self.yRange.0) / 5.0)
         .map({ String(format: "%.1f", $0) })
         .reversed()
+
+        if showZones {
+            self.zones = DynamicGraphView.createZones(zoneMax: zoneMaximum ?? CGFloat(y.max() ?? 1.0))
+        } else {
+            self.zones = nil
+        }
     }
 
     // Plot multiple series of floating point data
-    init(data: [([Double], [Double])], colors: [Color] = [Color.red, Color.green, Color.blue]) {
+    init(data: [([Double], [Double])], colors: [Color] = [Color.red, Color.green, Color.blue], showZones: Bool = false, zoneMaximum: Double? = nil) {
         // Repeat the colors array if it is shorter than the data array.
         // Check for an empty colors array
         self.colors = Array(Array(repeating: colors.count > 0 ? colors : [Color.red, Color.green, Color.blue],
@@ -191,8 +233,9 @@ struct DynamicGraphView: View {
         self.xRange = (min(0.0, self.dataPoints.min(by: { $0.x < $1.x })?.x ?? 0.0),
                        self.dataPoints.max(by: { $0.x < $1.x })?.x ?? 1.0)
         // Include y=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
+        let yRangeMax = self.dataPoints.max(by: { $0.y < $1.y })?.y ?? 1.0
         self.yRange = (min(0.0, self.dataPoints.min(by: { $0.y < $1.y })?.y ?? 0.0),
-                       self.dataPoints.max(by: { $0.y < $1.y })?.y ?? 1.0)
+                       yRangeMax)
         self.visibleStartIndex = 0
         self.visibleEndIndex = self.dataPoints.count
         self.visibleXRange = self.xRange
@@ -206,16 +249,22 @@ struct DynamicGraphView: View {
                               by: (self.yRange.1 - self.yRange.0) / 5.0)
         .map({ String(format: "%.1f", $0) })
         .reversed()
+
+        if showZones {
+            self.zones = DynamicGraphView.createZones(zoneMax: zoneMaximum ?? yRangeMax)
+        } else {
+            self.zones = nil
+        }
     }
 
     // Plot integer data
-    init(x: [Double], y: [Int], color: Color = Color.accentColor) {
-        self.init(x: x, y: y.map({ CGFloat($0) }), color: color)
+    init(x: [Double], y: [Int], color: Color = Color.accentColor, showZones: Bool = false, zoneMaximum: Double? = nil) {
+        self.init(x: x, y: y.map({ CGFloat($0) }), color: color, showZones: showZones, zoneMaximum: zoneMaximum)
     }
 
     // Plot multiple series of integer data
-    init(data: [([Double], [Int])], colors: [Color] = [Color.red, Color.green, Color.blue]) {
-        self.init(data: data.map({ ($0.0, $0.1.map({ CGFloat($0) })) }), colors: colors)
+    init(data: [([Double], [Int])], colors: [Color] = [Color.red, Color.green, Color.blue], showZones: Bool = false, zoneMaximum: Double? = nil) {
+        self.init(data: data.map({ ($0.0, $0.1.map({ CGFloat($0) })) }), colors: colors, showZones: showZones, zoneMaximum: zoneMaximum)
     }
 
     private static func createDataPoints(data: [([Double], [Double])], colors: [Color]) -> [DataPoint] {
@@ -224,6 +273,12 @@ struct DynamicGraphView: View {
             dataPoints.append(contentsOf: zip(x, y).map({ DataPoint(x: $0.0, y: $0.1, color: color) }))
         }
         return dataPoints
+    }
+
+    private static func createZones(zoneMax: CGFloat) -> [Zone] {
+        return zip(stride(from: 100.0, to: 50.0, by: -10.0).map({ zoneMax * $0 / 100.0}),
+                         [Color.red, Color.yellow, Color.green, Color.blue, Color.gray])
+        .map({ Zone(minimum: $0.0 - zoneMax / 10.0, maximum: $0.0, color: $0.1) })
     }
 
     func updateXLabels() {
@@ -301,14 +356,15 @@ struct DynamicGraphView_Previews: PreviewProvider {
         let y2 = x.map({sin($0)})
         let y3 = x.map({1 + sin($0)})
         let y4 = x2.map({ 1 + sin($0) })
-        DynamicGraphView(x: x, y: y)
-        DynamicGraphView(data: [(x, y), (x2, y4)])
-        DynamicGraphView(x: xInt1 + xInt2 + xInt3, y: yInt1 + yInt2 + yInt3)
-        DynamicGraphView(data: [(xInt1, yInt1), (xInt2, yInt2), (xInt3, yInt3)])
+        DynamicGraphView(x: x, y: y, showZones: true)
+        DynamicGraphView(data: [(x, y), (x2, y4)], showZones: true, zoneMaximum: 3.0)
+        DynamicGraphView(x: xInt1 + xInt2 + xInt3, y: yInt1 + yInt2 + yInt3, color: Color.purple)
+        DynamicGraphView(data: [(xInt1, yInt1), (xInt2, yInt2), (xInt3, yInt3)], colors: [Color.purple, Color.orange])
 
+        // TODO: Can't pan in a ScrollView
         ScrollView {
             LazyVStack {
-                DynamicGraphView(x: x, y: y3)
+                DynamicGraphView(x: x, y: y3, showZones: true)
                 DynamicGraphView(x: x, y: y)
                 DynamicGraphView(x: x, y: y2)
             }
