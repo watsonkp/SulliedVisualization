@@ -68,11 +68,9 @@ public struct DynamicGraphView: View {
     @State var isInteracting = false
 
     public var body: some View {
-        Canvas { context, size in
-            context.fill(Path(CGRect(origin: .zero, size: size)),
-                         with: .color(.secondary))
-        }.border(Color.accentColor)
-        .gesture(LongPressGesture().onEnded({ value in
+        StaticGraphView(data: dataPoints, xRange: xRange, yRange: yRange, showZones: zones != nil)
+        .border(Color.accentColor)
+        .gesture(TapGesture().onEnded({ value in
             isInteracting = true
         }))
         .sheet(isPresented: $isInteracting, content: {
@@ -192,7 +190,7 @@ public struct DynamicGraphView: View {
                             }
                         }.frame(maxWidth: .infinity)
                     }
-                }
+                }.padding()
                 Button(action: { isInteracting = false}) {
                     Text("Dismiss")
                 }
@@ -373,8 +371,11 @@ struct DynamicGraphView_Previews: PreviewProvider {
         ScrollView {
             LazyVStack {
                 DynamicGraphView(x: x, y: y3, showZones: true)
+                    .padding()
                 DynamicGraphView(x: x, y: y)
+                    .padding()
                 DynamicGraphView(x: x, y: y2)
+                    .padding()
             }
         }
     }
