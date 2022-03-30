@@ -74,7 +74,7 @@ public struct DynamicGraphView: View {
         .gesture(TapGesture().onEnded({ value in
             isInteracting = true
         }))
-        .sheet(isPresented: $isInteracting, content: {
+        .fullScreenCover(isPresented: $isInteracting, content: {
             VStack {
                 VStack(spacing: 0) {
                     HStack(spacing: 0) {
