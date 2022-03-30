@@ -65,124 +65,139 @@ public struct DynamicGraphView: View {
     @State var xLabels: [String]
     @State var yLabels: [String]
     let zones: [Zone]?
+    @State var isInteracting = false
 
     public var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
+        Canvas { context, size in
+            context.fill(Path(CGRect(origin: .zero, size: size)),
+                         with: .color(.secondary))
+        }.border(Color.accentColor)
+        .gesture(LongPressGesture().onEnded({ value in
+            isInteracting = true
+        }))
+        .sheet(isPresented: $isInteracting, content: {
+            VStack {
                 VStack(spacing: 0) {
-                    ForEach(yLabels, id: \.self) { label in
-                        YAxisLabelView(label: label)
-                    }
-                }
-                GeometryReader { proxy in
-                    Canvas { context, size in
-                        // Mark zones on data area if they exist
-                        if let zones = zones {
-                            context.opacity = 0.5
-                            for zone in zones {
-                                // Draw zones that fit in the current visible range
-                                if zone.maximum <= self.visibleYRange.1 && zone.minimum >= self.visibleYRange.0 {
-                                    context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: size.height - (zone.maximum - self.visibleYRange.0) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height),
-                                                             size: CGSize(width: size.width, height: (zone.maximum - zone.minimum) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height))),
-                                                 with: .color(zone.color))
-                                } else if zone.maximum > self.visibleYRange.1 && zone.minimum >= self.visibleYRange.0 {
-                                    // Draw zone with a maximum greater than the current visible range
-                                    context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: 0.0),
-                                                             size: CGSize(width: size.width, height: (self.visibleYRange.1 - zone.minimum) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height))),
-                                                 with: .color(zone.color))
-                                } else if zone.maximum <= self.visibleYRange.1 && zone.minimum < self.visibleYRange.0 {
-                                    // Draw zone with a minimum less than the current visible range
-                                    context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: size.height - (zone.maximum - self.visibleYRange.0) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height),
-                                                             size: CGSize(width: size.width, height: (zone.maximum - self.visibleYRange.0) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height))),
-                                                 with: .color(zone.color))
-                                } else if zone.maximum > self.visibleYRange.1 && zone.minimum < self.visibleYRange.0 {
-                                    // Draw zone that covers the entire visible range
-                                    context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: 0.0),
-                                                             size: CGSize(width: size.width, height: size.height))),
-                                                 with: .color(zone.color))
+                    HStack(spacing: 0) {
+                        VStack(spacing: 0) {
+                            ForEach(yLabels, id: \.self) { label in
+                                YAxisLabelView(label: label)
+                            }
+                        }
+                        GeometryReader { proxy in
+                            Canvas { context, size in
+                                // Mark zones on data area if they exist
+                                if let zones = zones {
+                                    context.opacity = 0.5
+                                    for zone in zones {
+                                        // Draw zones that fit in the current visible range
+                                        if zone.maximum <= self.visibleYRange.1 && zone.minimum >= self.visibleYRange.0 {
+                                            context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: size.height - (zone.maximum - self.visibleYRange.0) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height),
+                                                                     size: CGSize(width: size.width, height: (zone.maximum - zone.minimum) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height))),
+                                                         with: .color(zone.color))
+                                        } else if zone.maximum > self.visibleYRange.1 && zone.minimum >= self.visibleYRange.0 {
+                                            // Draw zone with a maximum greater than the current visible range
+                                            context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: 0.0),
+                                                                     size: CGSize(width: size.width, height: (self.visibleYRange.1 - zone.minimum) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height))),
+                                                         with: .color(zone.color))
+                                        } else if zone.maximum <= self.visibleYRange.1 && zone.minimum < self.visibleYRange.0 {
+                                            // Draw zone with a minimum less than the current visible range
+                                            context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: size.height - (zone.maximum - self.visibleYRange.0) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height),
+                                                                     size: CGSize(width: size.width, height: (zone.maximum - self.visibleYRange.0) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height))),
+                                                         with: .color(zone.color))
+                                        } else if zone.maximum > self.visibleYRange.1 && zone.minimum < self.visibleYRange.0 {
+                                            // Draw zone that covers the entire visible range
+                                            context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: 0.0),
+                                                                     size: CGSize(width: size.width, height: size.height))),
+                                                         with: .color(zone.color))
+                                        }
+                                    }
+                                    context.opacity = 1.0
+                                }
+                                // Y-axis ticks
+                                context.stroke(Path {
+                                    $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.2)))
+                                    $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.2)))
+                                    $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.4)))
+                                    $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.4)))
+                                    $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.6)))
+                                    $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.6)))
+                                    $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.8)))
+                                    $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.8)))
+                                }, with: .color(Color.primary),
+                                               lineWidth: 2)
+                                // Axes
+                                context.stroke(Path {
+                                    // y-axis
+                                    $0.move(to: CGPoint(x: 1, y: 0))
+                                    $0.addLine(to: CGPoint(x: 1, y: Int(size.height)))
+                                    // x-axis
+                                    $0.move(to: CGPoint(x: 0, y: Int(size.height)))
+                                    $0.addLine(to: CGPoint(x: Int(size.width), y: Int(size.height)))
+                                }, with: .color(Color.primary),
+                                               lineWidth: 2)
+                                // X-Axis ticks
+                                context.stroke(Path {
+                                    $0.move(to: CGPoint(x: Int(0.25 * size.width), y: Int(size.height) - 10))
+                                    $0.addLine(to: CGPoint(x: Int(0.25 * size.width), y: Int(size.height)))
+                                    $0.move(to: CGPoint(x: Int(0.5 * size.width), y: Int(size.height) - 10))
+                                    $0.addLine(to: CGPoint(x: Int(0.5 * size.width), y: Int(size.height)))
+                                    $0.move(to: CGPoint(x: Int(0.75 * size.width), y: Int(size.height) - 10))
+                                    $0.addLine(to: CGPoint(x: Int(0.75 * size.width), y: Int(size.height)))
+                                }, with: .color(Color.primary),
+                                               lineWidth: 2)
+                                // Plot data points that are within the current magnification range
+                                for point in dataPoints[visibleStartIndex..<visibleEndIndex] {
+                                    let origin = CGPoint(x: Int((point.x - visibleXRange.0) / (visibleXRange.1 - visibleXRange.0) * size.width),
+                                                         y: Int(size.height - (point.y - visibleYRange.0) / (visibleYRange.1 - visibleYRange.0) * size.height))
+                                    context.fill(Path(ellipseIn: CGRect(origin: origin,
+                                                                          size: CGSize(width: 3, height: 3))),
+                                                 with: .color(point.color))
                                 }
                             }
-                            context.opacity = 1.0
-                        }
-                        // Y-axis ticks
-                        context.stroke(Path {
-                            $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.2)))
-                            $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.2)))
-                            $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.4)))
-                            $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.4)))
-                            $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.6)))
-                            $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.6)))
-                            $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.8)))
-                            $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.8)))
-                        }, with: .color(Color.primary),
-                                       lineWidth: 2)
-                        // Axes
-                        context.stroke(Path {
-                            // y-axis
-                            $0.move(to: CGPoint(x: 1, y: 0))
-                            $0.addLine(to: CGPoint(x: 1, y: Int(size.height)))
-                            // x-axis
-                            $0.move(to: CGPoint(x: 0, y: Int(size.height)))
-                            $0.addLine(to: CGPoint(x: Int(size.width), y: Int(size.height)))
-                        }, with: .color(Color.primary),
-                                       lineWidth: 2)
-                        // X-Axis ticks
-                        context.stroke(Path {
-                            $0.move(to: CGPoint(x: Int(0.25 * size.width), y: Int(size.height) - 10))
-                            $0.addLine(to: CGPoint(x: Int(0.25 * size.width), y: Int(size.height)))
-                            $0.move(to: CGPoint(x: Int(0.5 * size.width), y: Int(size.height) - 10))
-                            $0.addLine(to: CGPoint(x: Int(0.5 * size.width), y: Int(size.height)))
-                            $0.move(to: CGPoint(x: Int(0.75 * size.width), y: Int(size.height) - 10))
-                            $0.addLine(to: CGPoint(x: Int(0.75 * size.width), y: Int(size.height)))
-                        }, with: .color(Color.primary),
-                                       lineWidth: 2)
-                        // Plot data points that are within the current magnification range
-                        for point in dataPoints[visibleStartIndex..<visibleEndIndex] {
-                            let origin = CGPoint(x: Int((point.x - visibleXRange.0) / (visibleXRange.1 - visibleXRange.0) * size.width),
-                                                 y: Int(size.height - (point.y - visibleYRange.0) / (visibleYRange.1 - visibleYRange.0) * size.height))
-                            context.fill(Path(ellipseIn: CGRect(origin: origin,
-                                                                  size: CGSize(width: 3, height: 3))),
-                                         with: .color(point.color))
+                            .gesture(MagnificationGesture().onEnded { value in
+                                // TODO: It seems like magnification can be infinity.
+                                // TODO: Handle large magnifications with exponential decay and a hard limit? min(10.0, Double.infinity) works.
+                                self.magnification = max(1.0, value * self.magnification)
+                                updateMagnification()
+                                updateXLabels()
+                                updateYLabels()
+                            })
+                            .gesture(DragGesture().onEnded { value in
+                                // Don't pan without zoom. Panning fits y data and doesn't force the inclusion of 0.
+                                // Panning at 1.0 zoom only adjusts to fit the y values, which feels surprising and unintuitive.
+                                if magnification == 1.0 {
+                                    return
+                                }
+                                let maxLeft = self.visibleXRange.0 - self.xRange.0
+                                let maxRight = self.xRange.1 - self.visibleXRange.1
+                                var drag = (self.visibleXRange.1 - self.visibleXRange.0) * (value.location.x - value.startLocation.x) / proxy.size.width
+                                // A pan > 0 is exposing more data from the left. maxLeft >= 0. A pan < 0 is unaffected by this statement.
+                                drag = min(drag, maxLeft)
+                                // A pan < 0 is exposing more data from the right. maxRight >= 0. A pan > 0 is unaffected by this statement.
+                                drag = max(drag, -maxRight)
+                                // Translate the data in the opposite direction of the drag aka "Natural scrolling".
+                                applyPan(-drag)
+                                updateXLabels()
+                                // Y axis labels may change after panning if the visible minimum and or maximum change.
+                                updateYLabels()
+                            })
                         }
                     }
-                    .gesture(MagnificationGesture().onEnded { value in
-                        // TODO: It seems like magnification can be infinity.
-                        // TODO: Handle large magnifications with exponential decay and a hard limit? min(10.0, Double.infinity) works.
-                        self.magnification = max(1.0, value * self.magnification)
-                        updateMagnification()
-                        updateXLabels()
-                        updateYLabels()
-                    })
-                    .gesture(DragGesture().onEnded { value in
-                        // Don't pan without zoom. Panning fits y data and doesn't force the inclusion of 0.
-                        // Panning at 1.0 zoom only adjusts to fit the y values, which feels surprising and unintuitive.
-                        if magnification == 1.0 {
-                            return
-                        }
-                        let maxLeft = self.visibleXRange.0 - self.xRange.0
-                        let maxRight = self.xRange.1 - self.visibleXRange.1
-                        var drag = (self.visibleXRange.1 - self.visibleXRange.0) * (value.location.x - value.startLocation.x) / proxy.size.width
-                        // A pan > 0 is exposing more data from the left. maxLeft >= 0. A pan < 0 is unaffected by this statement.
-                        drag = min(drag, maxLeft)
-                        // A pan < 0 is exposing more data from the right. maxRight >= 0. A pan > 0 is unaffected by this statement.
-                        drag = max(drag, -maxRight)
-                        // Translate the data in the opposite direction of the drag aka "Natural scrolling".
-                        applyPan(-drag)
-                        updateXLabels()
-                        // Y axis labels may change after panning if the visible minimum and or maximum change.
-                        updateYLabels()
-                    })
+                    HStack(spacing: 0) {
+                        AxisOrigin()
+                        HStack(spacing: 0) {
+                            ForEach(xLabels, id: \.self) { label in
+                                XAxisLabelView(label: label)
+                            }
+                        }.frame(maxWidth: .infinity)
+                    }
                 }
-            }
-            HStack(spacing: 0) {
-                AxisOrigin()
-                HStack(spacing: 0) {
-                    ForEach(xLabels, id: \.self) { label in
-                        XAxisLabelView(label: label)
-                    }
-                }.frame(maxWidth: .infinity)
-            }
+                Button(action: { isInteracting = false}) {
+                    Text("Dismiss")
+                }
         }
+        })
     }
 
     // Plot floating point data
