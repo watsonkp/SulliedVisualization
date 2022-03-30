@@ -64,11 +64,12 @@ public struct DynamicGraphView: View {
     @State var visibleYRange: (CGFloat, CGFloat)
     @State var xLabels: [String]
     @State var yLabels: [String]
-    let zones: [Zone]?
+    let showZones: Bool
+    let zoneMaximum: Double?
     @State var isInteracting = false
 
     public var body: some View {
-        StaticGraphView(data: dataPoints, xRange: xRange, yRange: yRange, showZones: zones != nil)
+        StaticGraphView(data: dataPoints, xRange: xRange, yRange: yRange, showZones: showZones, zoneMaximum: zoneMaximum)
         .border(Color.accentColor)
         .gesture(TapGesture().onEnded({ value in
             isInteracting = true
@@ -83,76 +84,7 @@ public struct DynamicGraphView: View {
                             }
                         }
                         GeometryReader { proxy in
-                            Canvas { context, size in
-                                // Mark zones on data area if they exist
-                                if let zones = zones {
-                                    context.opacity = 0.5
-                                    for zone in zones {
-                                        // Draw zones that fit in the current visible range
-                                        if zone.maximum <= self.visibleYRange.1 && zone.minimum >= self.visibleYRange.0 {
-                                            context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: size.height - (zone.maximum - self.visibleYRange.0) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height),
-                                                                     size: CGSize(width: size.width, height: (zone.maximum - zone.minimum) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height))),
-                                                         with: .color(zone.color))
-                                        } else if zone.maximum > self.visibleYRange.1 && zone.minimum >= self.visibleYRange.0 {
-                                            // Draw zone with a maximum greater than the current visible range
-                                            context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: 0.0),
-                                                                     size: CGSize(width: size.width, height: (self.visibleYRange.1 - zone.minimum) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height))),
-                                                         with: .color(zone.color))
-                                        } else if zone.maximum <= self.visibleYRange.1 && zone.minimum < self.visibleYRange.0 {
-                                            // Draw zone with a minimum less than the current visible range
-                                            context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: size.height - (zone.maximum - self.visibleYRange.0) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height),
-                                                                     size: CGSize(width: size.width, height: (zone.maximum - self.visibleYRange.0) / (self.visibleYRange.1 - self.visibleYRange.0) * size.height))),
-                                                         with: .color(zone.color))
-                                        } else if zone.maximum > self.visibleYRange.1 && zone.minimum < self.visibleYRange.0 {
-                                            // Draw zone that covers the entire visible range
-                                            context.fill(Path(CGRect(origin: CGPoint(x: 0.0, y: 0.0),
-                                                                     size: CGSize(width: size.width, height: size.height))),
-                                                         with: .color(zone.color))
-                                        }
-                                    }
-                                    context.opacity = 1.0
-                                }
-                                // Y-axis ticks
-                                context.stroke(Path {
-                                    $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.2)))
-                                    $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.2)))
-                                    $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.4)))
-                                    $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.4)))
-                                    $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.6)))
-                                    $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.6)))
-                                    $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.8)))
-                                    $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.8)))
-                                }, with: .color(Color.primary),
-                                               lineWidth: 2)
-                                // Axes
-                                context.stroke(Path {
-                                    // y-axis
-                                    $0.move(to: CGPoint(x: 1, y: 0))
-                                    $0.addLine(to: CGPoint(x: 1, y: Int(size.height)))
-                                    // x-axis
-                                    $0.move(to: CGPoint(x: 0, y: Int(size.height)))
-                                    $0.addLine(to: CGPoint(x: Int(size.width), y: Int(size.height)))
-                                }, with: .color(Color.primary),
-                                               lineWidth: 2)
-                                // X-Axis ticks
-                                context.stroke(Path {
-                                    $0.move(to: CGPoint(x: Int(0.25 * size.width), y: Int(size.height) - 10))
-                                    $0.addLine(to: CGPoint(x: Int(0.25 * size.width), y: Int(size.height)))
-                                    $0.move(to: CGPoint(x: Int(0.5 * size.width), y: Int(size.height) - 10))
-                                    $0.addLine(to: CGPoint(x: Int(0.5 * size.width), y: Int(size.height)))
-                                    $0.move(to: CGPoint(x: Int(0.75 * size.width), y: Int(size.height) - 10))
-                                    $0.addLine(to: CGPoint(x: Int(0.75 * size.width), y: Int(size.height)))
-                                }, with: .color(Color.primary),
-                                               lineWidth: 2)
-                                // Plot data points that are within the current magnification range
-                                for point in dataPoints[visibleStartIndex..<visibleEndIndex] {
-                                    let origin = CGPoint(x: Int((point.x - visibleXRange.0) / (visibleXRange.1 - visibleXRange.0) * size.width),
-                                                         y: Int(size.height - (point.y - visibleYRange.0) / (visibleYRange.1 - visibleYRange.0) * size.height))
-                                    context.fill(Path(ellipseIn: CGRect(origin: origin,
-                                                                          size: CGSize(width: 3, height: 3))),
-                                                 with: .color(point.color))
-                                }
-                            }
+                            DataViewV2(data: dataPoints[visibleStartIndex..<visibleEndIndex], xRange: visibleXRange, yRange: visibleYRange, showZones: showZones, zoneMaximum: zoneMaximum)
                             .gesture(MagnificationGesture().onEnded { value in
                                 // TODO: It seems like magnification can be infinity.
                                 // TODO: Handle large magnifications with exponential decay and a hard limit? min(10.0, Double.infinity) works.
@@ -220,11 +152,8 @@ public struct DynamicGraphView: View {
         .map({ String(format: "%.1f", $0) })
         .reversed()
 
-        if showZones {
-            self.zones = DynamicGraphView.createZones(zoneMax: zoneMaximum ?? CGFloat(y.max() ?? 1.0))
-        } else {
-            self.zones = nil
-        }
+        self.showZones = showZones
+        self.zoneMaximum = zoneMaximum
     }
 
     // Plot multiple series of floating point data
@@ -256,11 +185,8 @@ public struct DynamicGraphView: View {
         .map({ String(format: "%.1f", $0) })
         .reversed()
 
-        if showZones {
-            self.zones = DynamicGraphView.createZones(zoneMax: zoneMaximum ?? yRangeMax)
-        } else {
-            self.zones = nil
-        }
+        self.showZones = showZones
+        self.zoneMaximum = zoneMaximum
     }
 
     // Plot integer data
