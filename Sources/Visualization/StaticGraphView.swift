@@ -31,7 +31,7 @@ struct StaticGraphView: View {
             }
     }
 
-    public init(data: [DataPoint], xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil) {
+    init(data: [DataPoint], xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil) {
         self.dataPoints = data
         self.xRange = xRange
         self.yRange = yRange

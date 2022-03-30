@@ -79,7 +79,7 @@ struct DataViewV2: View {
         }
     }
 
-    public init(data: ArraySlice<DataPoint>, xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil) {
+    init(data: ArraySlice<DataPoint>, xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil) {
         self.dataPoints = data
         self.xRange = xRange
         self.yRange = yRange
@@ -93,7 +93,7 @@ struct DataViewV2: View {
         }
     }
 
-    public init(data: [DataPoint], xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil) {
+    init(data: [DataPoint], xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil) {
         self.init(data: ArraySlice(data), xRange: xRange, yRange: yRange, showZones: showZones, zoneMaximum: zoneMaximum)
     }
 }
