@@ -14,13 +14,16 @@ struct StaticGraphView: View {
                     VStack(spacing: 0) {
                         YAxis(labels: readableYRange.labels.reversed())
                     }
-                    DataViewV2(data: dataPoints,
-                               xRange: (Double(truncating: readableXRange.start as NSNumber),
-                                        Double(truncating: readableXRange.end as NSNumber)),
-                               yRange: (Double(truncating: readableYRange.start as NSNumber),
-                                        Double(truncating: readableYRange.end as NSNumber)),
-                               showZones: showZones,
-                               zoneMaximum: zoneMaximum)
+                    ZStack {
+                        DataViewV2(data: dataPoints,
+                                   xRange: (Double(truncating: readableXRange.start as NSNumber),
+                                            Double(truncating: readableXRange.end as NSNumber)),
+                                   yRange: (Double(truncating: readableYRange.start as NSNumber),
+                                            Double(truncating: readableYRange.end as NSNumber)),
+                                   showZones: showZones,
+                                   zoneMaximum: zoneMaximum)
+                        GridLineOverlayView(xTicks: readableXRange.count, yTicks: readableYRange.count)
+                    }
                 }
                 HStack(spacing: 0) {
                     AxisOrigin(positivePositions: readableYRange.integerDigits,

@@ -36,38 +36,6 @@ struct DataViewV2: View {
                 }
                 context.opacity = 1.0
             }
-            // Y-axis ticks
-            context.stroke(Path {
-                $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.2)))
-                $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.2)))
-                $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.4)))
-                $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.4)))
-                $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.6)))
-                $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.6)))
-                $0.move(to: CGPoint(x: 0, y: Int(size.height * 0.8)))
-                $0.addLine(to: CGPoint(x: 10, y: Int(size.height * 0.8)))
-            }, with: .color(Color.primary),
-                           lineWidth: 2)
-            // Axes
-            context.stroke(Path {
-                // y-axis
-                $0.move(to: CGPoint(x: 1, y: 0))
-                $0.addLine(to: CGPoint(x: 1, y: Int(size.height)))
-                // x-axis
-                $0.move(to: CGPoint(x: 0, y: Int(size.height)))
-                $0.addLine(to: CGPoint(x: Int(size.width), y: Int(size.height)))
-            }, with: .color(Color.primary),
-                           lineWidth: 2)
-            // X-Axis ticks
-            context.stroke(Path {
-                $0.move(to: CGPoint(x: Int(0.25 * size.width), y: Int(size.height) - 10))
-                $0.addLine(to: CGPoint(x: Int(0.25 * size.width), y: Int(size.height)))
-                $0.move(to: CGPoint(x: Int(0.5 * size.width), y: Int(size.height) - 10))
-                $0.addLine(to: CGPoint(x: Int(0.5 * size.width), y: Int(size.height)))
-                $0.move(to: CGPoint(x: Int(0.75 * size.width), y: Int(size.height) - 10))
-                $0.addLine(to: CGPoint(x: Int(0.75 * size.width), y: Int(size.height)))
-            }, with: .color(Color.primary),
-                           lineWidth: 2)
             // Plot data points that are within the current magnification range
             for point in dataPoints {
                 let origin = CGPoint(x: Int((point.x - xRange.0) / (xRange.1 - xRange.0) * size.width),
@@ -106,5 +74,6 @@ struct DataViewV2_Previews: PreviewProvider {
         let yRange: (CGFloat, CGFloat) = (min(0.0, y.min() ?? 0.0), y.max() ?? 1.0)
         let dataPoints = zip(x, y).map({ DataPoint(x: $0.0, y: $0.1, color: Color.purple) })
         DataViewV2(data: dataPoints, xRange: xRange, yRange: yRange, showZones: true)
+            .padding()
     }
 }

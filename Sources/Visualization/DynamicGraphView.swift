@@ -142,12 +142,15 @@ public struct DynamicGraphView: View {
                     HStack(spacing: 0) {
                         YAxis(labels: readableYRange.labels.reversed())
                         GeometryReader { proxy in
-                            DataViewV2(data: dataPoints[visibleStartIndex..<visibleEndIndex],
-                                       xRange: visibleXRange,
-                                       yRange: (Double(truncating: readableYRange.start as NSNumber),
-                                                Double(truncating: readableYRange.end as NSNumber)),
-                                       showZones: showZones,
-                                       zoneMaximum: zoneMaximum)
+                            ZStack {
+                                DataViewV2(data: dataPoints[visibleStartIndex..<visibleEndIndex],
+                                           xRange: visibleXRange,
+                                           yRange: (Double(truncating: readableYRange.start as NSNumber),
+                                                    Double(truncating: readableYRange.end as NSNumber)),
+                                           showZones: showZones,
+                                           zoneMaximum: zoneMaximum)
+                                GridLineOverlayView(xTicks: readableXRange.count, yTicks: readableYRange.count)
+                            }
                             // DragGesture needs to precede MagnificationGesture or its updating() callback will not be called
                                 .gesture(DragGesture()
                                     .updating($partialPan) { value, state, transaction in
