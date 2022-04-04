@@ -2,13 +2,25 @@ import SwiftUI
 import Accelerate
 
 struct AxisOrigin: View {
+    let placeholder: String
     var body: some View {
         VStack {
-            Text("0,0")
+            Text(placeholder)
                 .monospacedDigit()
                 .padding()
-                .foregroundColor(Color.secondary)
+                .opacity(0.0)
         }
+    }
+
+    init(positivePositions: Int, negativePositions: Int, negative: Bool = false) {
+        var s = negative ? "-" : ""
+        s.reserveCapacity(positivePositions + negativePositions + 1)
+        s.append(String(repeating: "0", count: positivePositions))
+        if negativePositions > 0 {
+            s.append(".")
+            s.append(String(repeating: "0", count: negativePositions))
+        }
+        self.placeholder = s
     }
 }
 
@@ -40,6 +52,17 @@ struct YAxisLabelView: View {
     }
 }
 
+struct YAxis: View {
+    let labels: [String]
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(labels, id: \.self) { label in
+                YAxisLabelView(label: label)
+            }
+        }
+    }
+}
+
 struct DataPoint {
     let x: CGFloat
     let y: CGFloat
@@ -57,6 +80,7 @@ public struct DynamicGraphView: View {
     let colors: [Color]
     let xRange: (CGFloat, CGFloat)
     let yRange: (CGFloat, CGFloat)
+    let readableYRange: ReadableRange
     var visibleStartIndex: Int {
         get {
             let width = (xRange.1 - xRange.0) / (zoom * partialZoom)
@@ -85,7 +109,6 @@ public struct DynamicGraphView: View {
                 .map({ String(format: "%.1f", $0) })
         }
     }
-    let yLabels: [String]
     let showZones: Bool
     let zoneMaximum: Double?
     @State var isInteracting = false
@@ -104,13 +127,9 @@ public struct DynamicGraphView: View {
             VStack {
                 VStack(spacing: 0) {
                     HStack(spacing: 0) {
-                        VStack(spacing: 0) {
-                            ForEach(yLabels, id: \.self) { label in
-                                YAxisLabelView(label: label)
-                            }
-                        }
+                        YAxis(labels: readableYRange.labels.reversed())
                         GeometryReader { proxy in
-                            DataViewV2(data: dataPoints[visibleStartIndex..<visibleEndIndex], xRange: visibleXRange, yRange: yRange, showZones: showZones, zoneMaximum: zoneMaximum)
+                            DataViewV2(data: dataPoints[visibleStartIndex..<visibleEndIndex], xRange: visibleXRange, yRange: (Double(truncating: readableYRange.start as NSNumber), Double(truncating: readableYRange.end as NSNumber)), showZones: showZones, zoneMaximum: zoneMaximum)
                             // DragGesture needs to precede MagnificationGesture or its updating() callback will not be called
                                 .gesture(DragGesture()
                                     .updating($partialPan) { value, state, transaction in
@@ -159,7 +178,9 @@ public struct DynamicGraphView: View {
                         }
                     }
                     HStack(spacing: 0) {
-                        AxisOrigin()
+                        AxisOrigin(positivePositions: readableYRange.integerDigits,
+                                   negativePositions: readableYRange.fractionDigits,
+                                   negative: yRange.0 < 0)
                         HStack(spacing: 0) {
                             ForEach(xLabels, id: \.self) { label in
                                 XAxisLabelView(label: label)
@@ -183,11 +204,7 @@ public struct DynamicGraphView: View {
         self.pan = (self.xRange.1 - self.xRange.0) / 2
         // Include y=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
         self.yRange = (min(0.0, CGFloat(y.min() ?? 0.0)), CGFloat(y.max() ?? 1.0))
-        self.yLabels = stride(from: self.yRange.0,
-                              to: self.yRange.1,
-                              by: (self.yRange.1 - self.yRange.0) / 5.0)
-        .map({ String(format: "%.1f", $0) })
-        .reversed()
+        self.readableYRange = ReadableRange(lower: yRange.0, upper: yRange.1)
 
         self.showZones = showZones
         self.zoneMaximum = zoneMaximum
@@ -209,11 +226,7 @@ public struct DynamicGraphView: View {
         let yRangeMax = self.dataPoints.max(by: { $0.y < $1.y })?.y ?? 1.0
         self.yRange = (min(0.0, self.dataPoints.min(by: { $0.y < $1.y })?.y ?? 0.0),
                        yRangeMax)
-        self.yLabels = stride(from: self.yRange.0,
-                              to: self.yRange.1,
-                              by: (self.yRange.1 - self.yRange.0) / 5.0)
-        .map({ String(format: "%.1f", $0) })
-        .reversed()
+        self.readableYRange = ReadableRange(lower: yRange.0, upper: yRange.1)
 
         self.showZones = showZones
         self.zoneMaximum = zoneMaximum
@@ -259,8 +272,10 @@ struct DynamicGraphView_Previews: PreviewProvider {
         let y2 = x.map({sin($0)})
         let y3 = x.map({1 + sin($0)})
         let y4 = x2.map({ 1 + sin($0) })
+        let y5 = x.map({2 + 1.3 * sin($0)})
         DynamicGraphView(x: x, y: y, showZones: true)
-        DynamicGraphView(data: [(x, y), (x2, y4)], showZones: true, zoneMaximum: 3.0)
+        DynamicGraphView(data: [(x, y), (x2, y4)], showZones: true, zoneMaximum: 4.0)
+        DynamicGraphView(x: x, y: y5)
         DynamicGraphView(x: xInt1 + xInt2 + xInt3, y: yInt1 + yInt2 + yInt3, color: Color.purple)
         DynamicGraphView(data: [(xInt1, yInt1), (xInt2, yInt2), (xInt3, yInt3)], colors: [Color.purple, Color.orange])
 
