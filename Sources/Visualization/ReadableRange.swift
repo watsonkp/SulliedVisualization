@@ -18,7 +18,7 @@ struct ReadableRange {
             let roughIncrement = magnitude / Decimal(nIncrements)
             let order = ReadableRange.order(roughIncrement)
             let scale = order > 0 ? pow(Decimal(10), order) : 1 / pow(Decimal(10), -1 * order)
-            let newIncrement = humanIncrements.map({ $0 * scale }).first(where: { roughIncrement < $0 })
+            let newIncrement = humanIncrements.map({ $0 * scale }).first(where: { roughIncrement <= $0 })
             if let newIncrement = newIncrement {
                 increments.append((nIncrements, newIncrement))
             }

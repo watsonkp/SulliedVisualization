@@ -3,10 +3,8 @@ import Accelerate
 
 struct StaticGraphView: View {
     let dataPoints: [DataPoint]
-    let xRange: (CGFloat, CGFloat)
-    let yRange: (CGFloat, CGFloat)
+    let readableXRange: ReadableRange
     let readableYRange: ReadableRange
-    @State var xLabels: [String]
     let showZones: Bool
     let zoneMaximum: Double?
 
@@ -17,7 +15,8 @@ struct StaticGraphView: View {
                         YAxis(labels: readableYRange.labels.reversed())
                     }
                     DataViewV2(data: dataPoints,
-                               xRange: xRange,
+                               xRange: (Double(truncating: readableXRange.start as NSNumber),
+                                        Double(truncating: readableXRange.end as NSNumber)),
                                yRange: (Double(truncating: readableYRange.start as NSNumber),
                                         Double(truncating: readableYRange.end as NSNumber)),
                                showZones: showZones,
@@ -26,9 +25,9 @@ struct StaticGraphView: View {
                 HStack(spacing: 0) {
                     AxisOrigin(positivePositions: readableYRange.integerDigits,
                                negativePositions: readableYRange.fractionDigits,
-                               negative: yRange.0 < 0)
+                               negative: readableYRange.end < 0)
                     HStack(spacing: 0) {
-                        ForEach(xLabels, id: \.self) { label in
+                        ForEach(readableXRange.labels, id: \.self) { label in
                             XAxisLabelView(label: label)
                         }
                     }.frame(maxWidth: .infinity)
@@ -38,13 +37,8 @@ struct StaticGraphView: View {
 
     init(data: [DataPoint], xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil) {
         self.dataPoints = data
-        self.xRange = xRange
-        self.yRange = yRange
+        self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: [3, 4, 5])
         self.readableYRange = ReadableRange(lower: yRange.0, upper: yRange.1)
-        self.xLabels = stride(from: self.xRange.0,
-                              to: self.xRange.1,
-                              by: (self.xRange.1 - self.xRange.0) / 4.0)
-        .map({ String(format: "%.1f", $0) })
         self.showZones = showZones
         self.zoneMaximum = zoneMaximum
     }

@@ -79,7 +79,7 @@ public struct DynamicGraphView: View {
     let dataPoints: [DataPoint]
     let colors: [Color]
     let xRange: (CGFloat, CGFloat)
-    let yRange: (CGFloat, CGFloat)
+    let readableXRange: ReadableRange
     let readableYRange: ReadableRange
     var visibleStartIndex: Int {
         get {
@@ -118,7 +118,7 @@ public struct DynamicGraphView: View {
     @State private var pan: CGFloat
 
     public var body: some View {
-        StaticGraphView(data: dataPoints, xRange: xRange, yRange: yRange, showZones: showZones, zoneMaximum: zoneMaximum)
+        StaticGraphView(data: dataPoints, xRange: xRange, yRange: (Double(truncating: readableYRange.start as NSNumber), Double(truncating: readableYRange.end as NSNumber)), showZones: showZones, zoneMaximum: zoneMaximum)
         .border(Color.accentColor)
         .gesture(TapGesture().onEnded({ value in
             isInteracting = true
@@ -180,7 +180,7 @@ public struct DynamicGraphView: View {
                     HStack(spacing: 0) {
                         AxisOrigin(positivePositions: readableYRange.integerDigits,
                                    negativePositions: readableYRange.fractionDigits,
-                                   negative: yRange.0 < 0)
+                                   negative: readableYRange.start < 0)
                         HStack(spacing: 0) {
                             ForEach(xLabels, id: \.self) { label in
                                 XAxisLabelView(label: label)
@@ -203,8 +203,8 @@ public struct DynamicGraphView: View {
         self.xRange = (min(0.0, CGFloat(x.min() ?? 0.0)), CGFloat(x.max() ?? 1.0))
         self.pan = (self.xRange.1 - self.xRange.0) / 2
         // Include y=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
-        self.yRange = (min(0.0, CGFloat(y.min() ?? 0.0)), CGFloat(y.max() ?? 1.0))
-        self.readableYRange = ReadableRange(lower: yRange.0, upper: yRange.1)
+        self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: [3, 4, 5])
+        self.readableYRange = ReadableRange(lower: min(0.0, CGFloat(y.min() ?? 0.0)), upper: CGFloat(y.max() ?? 1.0))
 
         self.showZones = showZones
         self.zoneMaximum = zoneMaximum
@@ -221,12 +221,11 @@ public struct DynamicGraphView: View {
         // Include x=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
         self.xRange = (min(0.0, self.dataPoints.min(by: { $0.x < $1.x })?.x ?? 0.0),
                        self.dataPoints.max(by: { $0.x < $1.x })?.x ?? 1.0)
+        self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: [3, 4, 5])
         self.pan = (self.xRange.1 - self.xRange.0) / 2
         // Include y=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
         let yRangeMax = self.dataPoints.max(by: { $0.y < $1.y })?.y ?? 1.0
-        self.yRange = (min(0.0, self.dataPoints.min(by: { $0.y < $1.y })?.y ?? 0.0),
-                       yRangeMax)
-        self.readableYRange = ReadableRange(lower: yRange.0, upper: yRange.1)
+        self.readableYRange = ReadableRange(lower: min(0.0, self.dataPoints.min(by: { $0.y < $1.y })?.y ?? 0.0), upper: yRangeMax)
 
         self.showZones = showZones
         self.zoneMaximum = zoneMaximum
