@@ -83,6 +83,9 @@ public struct DynamicGraphView: View {
     let readableYRange: ReadableRange
     var visibleStartIndex: Int {
         get {
+            if zoom * partialZoom == 1.0 {
+                return 0
+            }
             let width = (xRange.1 - xRange.0) / (zoom * partialZoom)
             let xStart = pan + partialPan - width / 2
             return dataPoints.firstIndex(where: { $0.x >= xStart }) ?? 0
@@ -90,6 +93,9 @@ public struct DynamicGraphView: View {
     }
     var visibleEndIndex: Int {
         get {
+            if zoom * partialZoom == 1.0 {
+                return dataPoints.count
+            }
             let width = (xRange.1 - xRange.0) / (zoom * partialZoom)
             let xStart = pan + partialPan - width / 2
             let xEnd = xStart + (xRange.1 - xRange.0) / (zoom * partialZoom)
@@ -98,13 +104,20 @@ public struct DynamicGraphView: View {
     }
     var visibleXRange: (CGFloat, CGFloat) {
         get {
+            if zoom * partialZoom == 1.0 {
+                return (Double(truncating: readableXRange.start as NSNumber),
+                        Double(truncating: readableXRange.end as NSNumber))
+            }
             let width = (xRange.1 - xRange.0) / (zoom * partialZoom)
             return (pan + partialPan - width / 2, pan + partialPan + width / 2)
         }
     }
     var xLabels: [String] {
         get {
-            let xIncrement = (self.visibleXRange.1 - self.visibleXRange.0) / 4.0
+            if zoom * partialZoom == 1.0 {
+                return readableXRange.labels
+            }
+            let xIncrement = (self.visibleXRange.1 - self.visibleXRange.0) / CGFloat(readableXRange.count)
             return stride(from: self.visibleXRange.0, to: self.visibleXRange.1, by: xIncrement)
                 .map({ String(format: "%.1f", $0) })
         }
@@ -129,7 +142,12 @@ public struct DynamicGraphView: View {
                     HStack(spacing: 0) {
                         YAxis(labels: readableYRange.labels.reversed())
                         GeometryReader { proxy in
-                            DataViewV2(data: dataPoints[visibleStartIndex..<visibleEndIndex], xRange: visibleXRange, yRange: (Double(truncating: readableYRange.start as NSNumber), Double(truncating: readableYRange.end as NSNumber)), showZones: showZones, zoneMaximum: zoneMaximum)
+                            DataViewV2(data: dataPoints[visibleStartIndex..<visibleEndIndex],
+                                       xRange: visibleXRange,
+                                       yRange: (Double(truncating: readableYRange.start as NSNumber),
+                                                Double(truncating: readableYRange.end as NSNumber)),
+                                       showZones: showZones,
+                                       zoneMaximum: zoneMaximum)
                             // DragGesture needs to precede MagnificationGesture or its updating() callback will not be called
                                 .gesture(DragGesture()
                                     .updating($partialPan) { value, state, transaction in
@@ -152,6 +170,7 @@ public struct DynamicGraphView: View {
                                         pan += translation
                                     })
                                 .gesture(MagnificationGesture()
+                                         // TODO: Handle the initial zoom from the readable range smoothly
                                          // TODO: It seems like magnification can be infinity.
                                          // TODO: Handle large magnifications with exponential decay and a hard limit? min(10.0, Double.infinity) works.
                                     .updating($partialZoom) { value, state, transaction in
@@ -182,7 +201,9 @@ public struct DynamicGraphView: View {
                                    negativePositions: readableYRange.fractionDigits,
                                    negative: readableYRange.start < 0)
                         HStack(spacing: 0) {
-                            ForEach(xLabels, id: \.self) { label in
+                            // Need to restrict the labels to the expected range because floating point division can be inconsistent.
+                            // 4.0 produced 4 labels consistently, but 3.0 sometimes produced 3 and sometimes 4 depending on the pan.
+                            ForEach(xLabels[0..<readableXRange.count], id: \.self) { label in
                                 XAxisLabelView(label: label)
                             }
                         }.frame(maxWidth: .infinity)
