@@ -29,7 +29,7 @@ struct ReadableRange {
 
         var roughStart = Decimal(lower) / self.increment
         var roundStart = Decimal(signOf: roughStart, magnitudeOf: roughStart)
-        NSDecimalRound(&roundStart, &roughStart, self.increment.exponent >= 0 ? 0 : -1 * self.increment.exponent, .down)
+        NSDecimalRound(&roundStart, &roughStart, 0, .down)
         roundStart *= self.increment
         self.start = roundStart
         self.end = self.start + Decimal(self.count) * self.increment
