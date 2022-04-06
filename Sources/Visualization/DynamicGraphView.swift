@@ -131,7 +131,14 @@ public struct DynamicGraphView: View {
     @State private var pan: CGFloat
 
     public var body: some View {
-        StaticGraphView(data: dataPoints, xRange: xRange, yRange: (Double(truncating: readableYRange.start as NSNumber), Double(truncating: readableYRange.end as NSNumber)), showZones: showZones, zoneMaximum: zoneMaximum)
+        StaticGraphView(data: dataPoints,
+                        xRange: xRange,
+                        yRange: (Double(truncating: readableYRange.start as NSNumber),
+                                 Double(truncating: readableYRange.end as NSNumber)),
+                        showZones: showZones,
+                        zoneMaximum: zoneMaximum,
+                        xLabelCount: [readableXRange.count],
+                        yLabelCount: [readableYRange.count])
         .border(Color.accentColor)
         .gesture(TapGesture().onEnded({ value in
             isInteracting = true
@@ -220,22 +227,22 @@ public struct DynamicGraphView: View {
     }
 
     // Plot floating point data
-    public init(x: [Double], y: [Double], color: Color = Color.accentColor, showZones: Bool = false, zoneMaximum: Double? = nil) {
+    public init(x: [Double], y: [Double], color: Color = Color.accentColor, showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6]) {
         self.dataPoints = zip(x, y).map({ DataPoint(x: $0.0, y: $0.1, color: color) })
         self.colors = [color]
         // Include x=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
         self.xRange = (min(0.0, CGFloat(x.min() ?? 0.0)), CGFloat(x.max() ?? 1.0))
         self.pan = (self.xRange.1 - self.xRange.0) / 2
         // Include y=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
-        self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: [3, 4, 5])
-        self.readableYRange = ReadableRange(lower: min(0.0, CGFloat(y.min() ?? 0.0)), upper: CGFloat(y.max() ?? 1.0))
+        self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: xLabelCount)
+        self.readableYRange = ReadableRange(lower: min(0.0, CGFloat(y.min() ?? 0.0)), upper: CGFloat(y.max() ?? 1.0), count: yLabelCount)
 
         self.showZones = showZones
         self.zoneMaximum = zoneMaximum
     }
 
     // Plot multiple series of floating point data
-    public init(data: [([Double], [Double])], colors: [Color] = [Color.red, Color.green, Color.blue], showZones: Bool = false, zoneMaximum: Double? = nil) {
+    public init(data: [([Double], [Double])], colors: [Color] = [Color.red, Color.green, Color.blue], showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6]) {
         // Repeat the colors array if it is shorter than the data array.
         // Check for an empty colors array
         self.colors = Array(Array(repeating: colors.count > 0 ? colors : [Color.red, Color.green, Color.blue],
@@ -245,24 +252,34 @@ public struct DynamicGraphView: View {
         // Include x=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
         self.xRange = (min(0.0, self.dataPoints.min(by: { $0.x < $1.x })?.x ?? 0.0),
                        self.dataPoints.max(by: { $0.x < $1.x })?.x ?? 1.0)
-        self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: [3, 4, 5])
+        self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: xLabelCount)
         self.pan = (self.xRange.1 - self.xRange.0) / 2
         // Include y=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
         let yRangeMax = self.dataPoints.max(by: { $0.y < $1.y })?.y ?? 1.0
-        self.readableYRange = ReadableRange(lower: min(0.0, self.dataPoints.min(by: { $0.y < $1.y })?.y ?? 0.0), upper: yRangeMax)
+        self.readableYRange = ReadableRange(lower: min(0.0, self.dataPoints.min(by: { $0.y < $1.y })?.y ?? 0.0), upper: yRangeMax, count: yLabelCount)
 
         self.showZones = showZones
         self.zoneMaximum = zoneMaximum
     }
 
     // Plot integer data
-    public init(x: [Double], y: [Int], color: Color = Color.accentColor, showZones: Bool = false, zoneMaximum: Double? = nil) {
-        self.init(x: x, y: y.map({ CGFloat($0) }), color: color, showZones: showZones, zoneMaximum: zoneMaximum)
+    public init(x: [Double], y: [Int], color: Color = Color.accentColor, showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6]) {
+        self.init(x: x, y: y.map({ CGFloat($0) }),
+                  color: color,
+                  showZones: showZones,
+                  zoneMaximum: zoneMaximum,
+                  xLabelCount: xLabelCount,
+                  yLabelCount: yLabelCount)
     }
 
     // Plot multiple series of integer data
-    public init(data: [([Double], [Int])], colors: [Color] = [Color.red, Color.green, Color.blue], showZones: Bool = false, zoneMaximum: Double? = nil) {
-        self.init(data: data.map({ ($0.0, $0.1.map({ CGFloat($0) })) }), colors: colors, showZones: showZones, zoneMaximum: zoneMaximum)
+    public init(data: [([Double], [Int])], colors: [Color] = [Color.red, Color.green, Color.blue], showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6]) {
+        self.init(data: data.map({ ($0.0, $0.1.map({ CGFloat($0) })) }),
+                  colors: colors,
+                  showZones: showZones,
+                  zoneMaximum: zoneMaximum,
+                  xLabelCount: xLabelCount,
+                  yLabelCount: yLabelCount)
     }
 
     private static func createDataPoints(data: [([Double], [Double])], colors: [Color]) -> [DataPoint] {

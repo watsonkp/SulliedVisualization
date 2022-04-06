@@ -38,10 +38,10 @@ struct StaticGraphView: View {
             }
     }
 
-    init(data: [DataPoint], xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil) {
+    init(data: [DataPoint], xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6]) {
         self.dataPoints = data
-        self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: [3, 4, 5])
-        self.readableYRange = ReadableRange(lower: yRange.0, upper: yRange.1)
+        self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: xLabelCount)
+        self.readableYRange = ReadableRange(lower: yRange.0, upper: yRange.1, count: yLabelCount)
         self.showZones = showZones
         self.zoneMaximum = zoneMaximum
     }
