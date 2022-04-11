@@ -8,8 +8,14 @@ struct ReadableRange {
     let count: Int
     let labels: [String]
     let labelFactor: Decimal
+    var labelFactorLabel: String {
+        get {
+            formatter.string(from: labelFactor as NSNumber) ?? "??"
+        }
+    }
     let integerDigits: Int
     let fractionDigits: Int
+    let formatter = NumberFormatter()
 
     init(lower: Double, upper: Double, count: [Int] = [4, 5, 6]) {
         let magnitude = Decimal(upper - lower)

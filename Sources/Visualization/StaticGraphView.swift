@@ -35,6 +35,9 @@ struct StaticGraphView: View {
                         }
                     }.frame(maxWidth: .infinity)
                 }
+                if readableXRange.labelFactor != 1 || readableYRange.labelFactor != 1{
+                    Text("Dimensions: \(readableYRange.labelFactorLabel) by \(readableXRange.labelFactorLabel)")
+                }
             }
     }
 
@@ -55,5 +58,11 @@ struct StaticGraphView_Previews: PreviewProvider {
         let yRange: (CGFloat, CGFloat) = (min(0.0, y.min() ?? 0.0), y.max() ?? 1.0)
         let dataPoints = zip(x, y).map({ DataPoint(x: $0.0, y: $0.1, color: Color.purple) })
         StaticGraphView(data: dataPoints, xRange: xRange, yRange: yRange, showZones: true)
+
+        let x2 = Array(stride(from: 0.0, to: 7000, by: 10.0))
+        let y2 = x2.map({3000 + 25000 * sin($0 / 10 * Double.pi / 180)})
+        StaticGraphView(data: zip(x2, y2).map({ DataPoint(x: $0.0, y: $0.1, color: Color.purple) }),
+                        xRange: (x2.min() ?? 0.0, x2.max() ?? 1.0),
+                        yRange: (y2.min() ?? 0.0, y2.max() ?? 1.0))
     }
 }

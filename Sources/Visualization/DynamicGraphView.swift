@@ -218,6 +218,9 @@ public struct DynamicGraphView: View {
                             }
                         }.frame(maxWidth: .infinity)
                     }
+                    if readableXRange.labelFactor != 1 || readableYRange.labelFactor != 1{
+                        Text("Dimensions: \(readableYRange.labelFactorLabel) by \(readableXRange.labelFactorLabel)")
+                    }
                 }.padding()
                 Button(action: { isInteracting = false}) {
                     Text("Dismiss")
@@ -301,6 +304,7 @@ struct DynamicGraphView_Previews: PreviewProvider {
     static var previews: some View {
         let x = vDSP.ramp(withInitialValue: 0.0, increment: Double.pi / 45.0, count: 180)
         let x2 = vDSP.ramp(withInitialValue: 4 * Double.pi, increment: Double.pi / 45.0, count: 90)
+        let x3 = Array(stride(from: 0.0, to: 7000, by: 10.0))
         let xInt1 = Array(stride(from: 0.0, to: 25.0, by: 1.0))
         let xInt2 = Array(stride(from: 25.0, to: 75.0, by: 1.0))
         let xInt3 = Array(stride(from: 75.0, to: 100.0, by: 1.0))
@@ -313,11 +317,13 @@ struct DynamicGraphView_Previews: PreviewProvider {
         let y3 = x.map({1 + sin($0)})
         let y4 = x2.map({ 1 + sin($0) })
         let y5 = x.map({2 + 1.3 * sin($0)})
+        let y6 = x3.map({3000 + 2500 * sin($0 / 10 * Double.pi / 180)})
         DynamicGraphView(x: x, y: y, showZones: true)
         DynamicGraphView(data: [(x, y), (x2, y4)], showZones: true, zoneMaximum: 4.0)
         DynamicGraphView(x: x, y: y5)
         DynamicGraphView(x: xInt1 + xInt2 + xInt3, y: yInt1 + yInt2 + yInt3, color: Color.purple)
         DynamicGraphView(data: [(xInt1, yInt1), (xInt2, yInt2), (xInt3, yInt3)], colors: [Color.purple, Color.orange])
+        DynamicGraphView(x: x3, y: y6)
 
         ScrollView {
             LazyVStack {
