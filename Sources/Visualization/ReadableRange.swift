@@ -7,6 +7,7 @@ struct ReadableRange {
     let increment: Decimal
     let count: Int
     let labels: [String]
+    let labelFactor: Decimal
     let integerDigits: Int
     let fractionDigits: Int
 
@@ -15,12 +16,19 @@ struct ReadableRange {
         var increments = [(Int, Decimal)]()
         let humanIncrements: [Decimal] = [1.0, 2.0, 5.0, 10.0]
         for nIncrements in count {
-            let roughIncrement = magnitude / Decimal(nIncrements)
-            let order = ReadableRange.order(roughIncrement)
-            let scale = order > 0 ? pow(Decimal(10), order) : 1 / pow(Decimal(10), -1 * order)
-            let newIncrement = humanIncrements.map({ $0 * scale }).first(where: { roughIncrement <= $0 })
-            if let newIncrement = newIncrement {
-                increments.append((nIncrements, newIncrement))
+            for humanFactor in humanIncrements {
+                let roughIncrement = magnitude / Decimal(nIncrements)
+                let order = ReadableRange.order(roughIncrement)
+                let scale = order > 0 ? pow(Decimal(10), order) : 1 / pow(Decimal(10), -1 * order)
+                let increment = humanFactor * scale
+                var roughStart = Decimal(lower) / increment
+                var roundStart = Decimal(signOf: roughStart, magnitudeOf: roughStart)
+                NSDecimalRound(&roundStart, &roughStart, 0, .down)
+                roundStart *= increment
+                let end = roundStart + Decimal(nIncrements) * increment
+                if roundStart <= Decimal(lower) && end >= Decimal(upper) {
+                    increments.append((nIncrements, increment))
+                }
             }
         }
         let finalIncrement = increments.min(by: { (Decimal($0.0) * $0.1 - magnitude) < (Decimal($1.0) * $1.1 - magnitude)}) ?? (5, Decimal(upper - lower) / Decimal(5))
@@ -34,14 +42,20 @@ struct ReadableRange {
         self.start = roundStart
         self.end = self.start + Decimal(self.count) * self.increment
 
-        self.fractionDigits = self.increment.exponent >= 0 ? 0 : -1 * self.increment.exponent
-        let incrementOrder = ReadableRange.order(self.increment)
-        self.integerDigits = incrementOrder >= 0 ? incrementOrder + 1 : 1
+        // Limit labels to 3 or 4 digits by factoring out 10E(3 * n)
+        let rangeOrder = ReadableRange.order(self.end - self.start) / 3 * 3
+        self.labelFactor = rangeOrder >= 0 ? pow(10, rangeOrder) : 1 / pow(10, -1 * rangeOrder + 3)
+        let endOrder = ReadableRange.order(self.end / self.labelFactor)
+        self.integerDigits = endOrder >= 0 ? endOrder + 1 : 1
+        let incrementOrder = ReadableRange.order(increment / self.labelFactor)
+        self.fractionDigits = incrementOrder >= 0 ? 0 : -1 * incrementOrder
+
         let formatter = NumberFormatter()
         formatter.minimumFractionDigits = self.fractionDigits
-        self.labels = stride(from: self.start,
-                             to: self.end,
-                             by: self.increment)
+        formatter.maximumFractionDigits = self.fractionDigits
+        self.labels = stride(from: self.start / self.labelFactor,
+                             to: self.end / self.labelFactor,
+                             by: self.increment / self.labelFactor)
         .map({ formatter.string(from: $0 as NSNumber) ?? "??" })
     }
 
