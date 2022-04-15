@@ -3,8 +3,8 @@ import Accelerate
 
 struct StaticGraphView: View {
     let dataPoints: [DataPoint]
-    let readableXRange: ReadableRange
-    let readableYRange: ReadableRange
+    let readableXRange: ReadableRangeProtocol
+    let readableYRange: ReadableRangeProtocol
     let showZones: Bool
     let zoneMaximum: Double?
 
@@ -16,10 +16,10 @@ struct StaticGraphView: View {
                     }
                     ZStack {
                         DataViewV2(data: dataPoints,
-                                   xRange: (Double(truncating: readableXRange.start as NSNumber),
-                                            Double(truncating: readableXRange.end as NSNumber)),
-                                   yRange: (Double(truncating: readableYRange.start as NSNumber),
-                                            Double(truncating: readableYRange.end as NSNumber)),
+                                   xRange: (readableXRange.start,
+                                            readableXRange.end),
+                                   yRange: (readableYRange.start,
+                                            readableYRange.end),
                                    showZones: showZones,
                                    zoneMaximum: zoneMaximum)
                         GridLineOverlayView(xTicks: readableXRange.count, yTicks: readableYRange.count)
@@ -27,7 +27,7 @@ struct StaticGraphView: View {
                 }
                 HStack(spacing: 0) {
                     AxisOrigin(positivePositions: readableYRange.integerDigits,
-                               negativePositions: readableYRange.fractionDigits,
+                               negativePositions: readableYRange.fractionalDigits,
                                negative: readableYRange.end < 0)
                     HStack(spacing: 0) {
                         ForEach(readableXRange.labels, id: \.self) { label in
@@ -41,12 +41,24 @@ struct StaticGraphView: View {
             }
     }
 
-    init(data: [DataPoint], xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6]) {
+    init(data: [DataPoint], xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6], xDimension: Dimension? = nil, yDimension: Dimension? = nil) {
         self.dataPoints = data
-        self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: xLabelCount)
-        self.readableYRange = ReadableRange(lower: yRange.0, upper: yRange.1, count: yLabelCount)
         self.showZones = showZones
         self.zoneMaximum = zoneMaximum
+
+        switch xDimension {
+        case let duration as UnitDuration:
+            self.readableXRange = ReadableDurationRange(lower: Measurement(value: xRange.0, unit: duration), upper: Measurement(value: xRange.1, unit: duration))
+        default:
+            self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: xLabelCount)
+        }
+
+        switch yDimension {
+        case let duration as UnitDuration:
+            self.readableYRange = ReadableDurationRange(lower: Measurement(value: yRange.0, unit: duration), upper: Measurement(value: yRange.1, unit: duration))
+        default:
+            self.readableYRange = ReadableRange(lower: yRange.0, upper: yRange.1, count: yLabelCount)
+        }
     }
 }
 
@@ -64,5 +76,10 @@ struct StaticGraphView_Previews: PreviewProvider {
         StaticGraphView(data: zip(x2, y2).map({ DataPoint(x: $0.0, y: $0.1, color: Color.purple) }),
                         xRange: (x2.min() ?? 0.0, x2.max() ?? 1.0),
                         yRange: (y2.min() ?? 0.0, y2.max() ?? 1.0))
+
+        StaticGraphView(data: zip(x2, y2).map({ DataPoint(x: $0.0, y: $0.1, color: Color.purple) }),
+                        xRange: (x2.min() ?? 0.0, x2.max() ?? 1.0),
+                        yRange: (y2.min() ?? 0.0, y2.max() ?? 1.0),
+                        xDimension: UnitDuration.seconds)
     }
 }
