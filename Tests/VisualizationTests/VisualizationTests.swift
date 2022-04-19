@@ -151,4 +151,67 @@
             XCTAssertEqual(range.end, 2.0)
             XCTAssertEqual(range.labels, ["0", "500", "1000", "1500"])
         }
+
+        func testReadablePaceRange() {
+            // 1000 m / 3.0 m/s / 60 s/min = 5.55 == 5:33 per kilometer
+            // 1000 m / 5.0 m/s / 60 s/min = 3.33 == 3:20 per kilometer
+            var range = ReadablePaceRange(lower: Measurement(value: 3.0, unit: UnitSpeed.metersPerSecond),
+                                          upper: Measurement(value: 5.0, unit: UnitSpeed.metersPerSecond))
+            XCTAssertEqual(range.start, Measurement(value: 1000 / (6 * 60.0), unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range.end, Measurement(value: 1000 / (3 * 60.0), unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range.labels, ["06:00", "05:00", "04:00"])
+
+            // 1609.344 m / 3.0 m/s / 60 s/min = 8.941 == 8:56 per mile
+            // 1609.344 m / 5.0 m/s / 60 s/min = 5.364 == 5:22 per mile
+            range = ReadablePaceRange(lower: Measurement(value: 3.0, unit: UnitSpeed.metersPerSecond),
+                                      upper: Measurement(value: 5.0, unit: UnitSpeed.metersPerSecond), labelUnit: UnitPace.minutesPerMile)
+            XCTAssertEqual(range.start, Measurement(value: 1609.344 / (9 * 60), unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range.end, Measurement(value: 1609.344 / (5 * 60), unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range.labels, ["09:00", "08:00", "07:00", "06:00"])
+
+            // 400 m / 5.0 m/s = 80 per 400 m
+            // 400 m / 7.0 m/s = 57 per 400 m
+            range = ReadablePaceRange(lower: Measurement(value: 5.0, unit: UnitSpeed.metersPerSecond),
+                                      upper: Measurement(value: 7.0, unit: UnitSpeed.metersPerSecond), labelUnit: UnitPace.minutesPer400)
+            XCTAssertEqual(range.start, Measurement(value: 400 / 90.0, unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range.end, Measurement(value: 400 / 50.0, unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range.labels, ["90", "80", "70", "60"])
+
+            // 42195 m / 3 m/s / 3600 s/hr = 3.91 == 3:56 per marathon
+            // 42195 m / 5 m/s / 3600 s/hr = 2.34 == 2:21 per marathon
+            range = ReadablePaceRange(lower: Measurement(value: 3.0, unit: UnitSpeed.metersPerSecond),
+                                      upper: Measurement(value: 5.0, unit: UnitSpeed.metersPerSecond), labelUnit: UnitPace.minutesPerMarathon)
+            XCTAssertEqual(range.start, Measurement(value: 42195 / (4 * 3600.0), unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range.end, Measurement(value: 42195 / (2 * 3600.0), unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range.labels, ["04:00", "03:30", "03:00", "02:30"])
+        }
+
+        func testUnitPace() {
+            // 1000 m / 3 m/s / 60s = 5.55 == 5:33 per kilometer
+            XCTAssertEqual(UnitPace.fromSpeed(Measurement(value: 3.0, unit: UnitSpeed.metersPerSecond)),
+                           Measurement(value: 1000 / 3.0 / 60, unit: UnitPace.minutesPerKilometer))
+            // 1000 m / 3 m/s / 60s * 1.609344 km/mile = 8.94 == 8:56 per mile
+            XCTAssertEqual(UnitPace.fromSpeed(Measurement(value: 3.0, unit: UnitSpeed.metersPerSecond))
+                .converted(to: UnitPace.minutesPerMile),
+                           Measurement(value: 1000 / 3.0 / 60 * 1.609344, unit: UnitPace.minutesPerMile))
+            // 1000 m / 5 m/s / 60s = 3.333 == 3:20 per kilometer
+            XCTAssertEqual(UnitPace.fromSpeed(Measurement(value: 5.0, unit: UnitSpeed.metersPerSecond)),
+                           Measurement(value: 1000 / 5.0 / 60, unit: UnitPace.minutesPerKilometer))
+            // 1000 m / 5 m/s / 60s * 1.609344 km/mile = 5.364 == 5:22 per mile
+            XCTAssertEqual(UnitPace.fromSpeed(Measurement(value: 5.0, unit: UnitSpeed.metersPerSecond))
+                .converted(to: UnitPace.minutesPerMile),
+                           Measurement(value: 1000 / 5.0 / 60 * 1.609344, unit: UnitPace.minutesPerMile))
+            // Calculate a pace of infinity when speed is zero
+            XCTAssertEqual(UnitPace.fromSpeed(Measurement(value: 0.0, unit: UnitSpeed.metersPerSecond)),
+                           Measurement(value: Double.infinity, unit: .minutesPerKilometer))
+            // Convert a pace of infinity from a speed of zero
+            XCTAssertEqual(UnitPace.fromSpeed(Measurement(value: 0.0, unit: UnitSpeed.metersPerSecond)).converted(to: .minutesPerMile),
+                           Measurement(value: Double.infinity, unit: .minutesPerMile))
+            // Calculate a speed of zero when pace is infinity
+            XCTAssertEqual(UnitPace.toSpeed(Measurement(value: .infinity, unit: .minutesPerKilometer)),
+                           Measurement(value: 0.0, unit: .metersPerSecond))
+            // Convert a speed of zero from pace of infinity
+            XCTAssertEqual(UnitPace.toSpeed(Measurement(value: .infinity, unit: .minutesPerKilometer)).converted(to: .kilometersPerHour),
+                           Measurement(value: 0.0, unit: .metersPerSecond))
+        }
     }
