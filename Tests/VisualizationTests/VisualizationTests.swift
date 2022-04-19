@@ -2,6 +2,12 @@
     @testable import Visualization
 
     final class VisualizationTests: XCTestCase {
+        static func assertAlmostEqual(_ expression1: Double, _ expression2: Double, precision: Double = 0.001) {
+            XCTAssertLessThan(abs(expression1 - expression2) / expression1,
+                              precision,
+                              "\(expression1) is not almost equal to \(expression2) within \(100 * precision)%")
+        }
+
         func testReadableRange() {
             // Negative start
             var range = ReadableRange(lower: -1.0, upper: 1.0, count: [4, 5, 6])
@@ -157,33 +163,39 @@
             // 1000 m / 5.0 m/s / 60 s/min = 3.33 == 3:20 per kilometer
             var range = ReadablePaceRange(lower: Measurement(value: 3.0, unit: UnitSpeed.metersPerSecond),
                                           upper: Measurement(value: 5.0, unit: UnitSpeed.metersPerSecond))
-            XCTAssertEqual(range.start, Measurement(value: 1000 / (6 * 60.0), unit: UnitSpeed.metersPerSecond).value)
-            XCTAssertEqual(range.end, Measurement(value: 1000 / (3 * 60.0), unit: UnitSpeed.metersPerSecond).value)
-            XCTAssertEqual(range.labels, ["06:00", "05:00", "04:00"])
+            XCTAssertEqual(range!.start, Measurement(value: 1000 / (6 * 60.0), unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range!.end, Measurement(value: 1000 / (3 * 60.0), unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range!.labels, ["06:00", "05:00", "04:00"])
 
             // 1609.344 m / 3.0 m/s / 60 s/min = 8.941 == 8:56 per mile
             // 1609.344 m / 5.0 m/s / 60 s/min = 5.364 == 5:22 per mile
             range = ReadablePaceRange(lower: Measurement(value: 3.0, unit: UnitSpeed.metersPerSecond),
                                       upper: Measurement(value: 5.0, unit: UnitSpeed.metersPerSecond), labelUnit: UnitPace.minutesPerMile)
-            XCTAssertEqual(range.start, Measurement(value: 1609.344 / (9 * 60), unit: UnitSpeed.metersPerSecond).value)
-            XCTAssertEqual(range.end, Measurement(value: 1609.344 / (5 * 60), unit: UnitSpeed.metersPerSecond).value)
-            XCTAssertEqual(range.labels, ["09:00", "08:00", "07:00", "06:00"])
+            VisualizationTests.assertAlmostEqual(range!.start, Measurement(value: 1609.344 / (9 * 60), unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range!.end, Measurement(value: 1609.344 / (5 * 60), unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range!.labels, ["09:00", "08:00", "07:00", "06:00"])
 
             // 400 m / 5.0 m/s = 80 per 400 m
             // 400 m / 7.0 m/s = 57 per 400 m
             range = ReadablePaceRange(lower: Measurement(value: 5.0, unit: UnitSpeed.metersPerSecond),
                                       upper: Measurement(value: 7.0, unit: UnitSpeed.metersPerSecond), labelUnit: UnitPace.minutesPer400)
-            XCTAssertEqual(range.start, Measurement(value: 400 / 90.0, unit: UnitSpeed.metersPerSecond).value)
-            XCTAssertEqual(range.end, Measurement(value: 400 / 50.0, unit: UnitSpeed.metersPerSecond).value)
-            XCTAssertEqual(range.labels, ["90", "80", "70", "60"])
+            XCTAssertEqual(range!.start, Measurement(value: 400 / 90.0, unit: UnitSpeed.metersPerSecond).value)
+            VisualizationTests.assertAlmostEqual(range!.end, Measurement(value: 400 / 50.0, unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range!.labels, ["90", "80", "70", "60"])
 
             // 42195 m / 3 m/s / 3600 s/hr = 3.91 == 3:56 per marathon
             // 42195 m / 5 m/s / 3600 s/hr = 2.34 == 2:21 per marathon
             range = ReadablePaceRange(lower: Measurement(value: 3.0, unit: UnitSpeed.metersPerSecond),
                                       upper: Measurement(value: 5.0, unit: UnitSpeed.metersPerSecond), labelUnit: UnitPace.minutesPerMarathon)
-            XCTAssertEqual(range.start, Measurement(value: 42195 / (4 * 3600.0), unit: UnitSpeed.metersPerSecond).value)
-            XCTAssertEqual(range.end, Measurement(value: 42195 / (2 * 3600.0), unit: UnitSpeed.metersPerSecond).value)
-            XCTAssertEqual(range.labels, ["04:00", "03:30", "03:00", "02:30"])
+            XCTAssertEqual(range!.start, Measurement(value: 42195 / (4 * 3600.0), unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range!.end, Measurement(value: 42195 / (2 * 3600.0), unit: UnitSpeed.metersPerSecond).value)
+            XCTAssertEqual(range!.labels, ["04:00", "03:30", "03:00", "02:30"])
+
+            // 1609.344 m / 0.0 m/s / 60 s/min = Infinity
+            // 1609.344 m / 5.0 m/s / 60 s/min = 5.364 == 5:22 per mile
+            range = ReadablePaceRange(lower: Measurement(value: 0.0, unit: UnitSpeed.metersPerSecond),
+                                      upper: Measurement(value: 5.0, unit: UnitSpeed.metersPerSecond), labelUnit: UnitPace.minutesPerMile)
+            XCTAssertNil(range)
         }
 
         func testUnitPace() {

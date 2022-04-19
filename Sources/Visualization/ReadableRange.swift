@@ -25,7 +25,7 @@ struct ReadablePaceRange: ReadableRangeProtocol {
     let labelFactorLabel: String
 
     // Lesser pace values are greater speeds, so some calculations are negative instead of positive.
-    init(lower: Measurement<UnitSpeed>, upper: Measurement<UnitSpeed>, labelUnit: UnitPace = UnitPace.minutesPerKilometer) {
+    init?(lower: Measurement<UnitSpeed>, upper: Measurement<UnitSpeed>, labelUnit: UnitPace = UnitPace.minutesPerKilometer) {
         // Find a human readable increment that covers the upper and lower values while starting at an integer multiple of the increment and using no more than the specified count of occurences.
         // Ascending order to prefer smallest and most frequent increment.
         let humanReadable = [1.0, 2.0, 5.0, 10.0, 15.0, 30.0,
@@ -35,6 +35,11 @@ struct ReadablePaceRange: ReadableRangeProtocol {
         let maximumCount = 5
         let lowerPace = UnitPace.fromSpeed(lower).converted(to: labelUnit)
         let upperPace = UnitPace.fromSpeed(upper).converted(to: labelUnit)
+        // WARNING: A speed of zero results in a pace of infinity.
+        // It's unclear how infinity should be handled to prevent runtime crashes.
+        guard lowerPace.value.isFinite && upperPace.value.isFinite else {
+            return nil
+        }
         var options = [(Measurement<UnitPace>, Int, Measurement<UnitPace>)]()
         for factor in humanReadable {
             let increment = Measurement(value: factor / 60.0, unit: labelUnit)
