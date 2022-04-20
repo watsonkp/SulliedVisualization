@@ -43,6 +43,7 @@ struct ReadablePaceRange: ReadableRangeProtocol {
         var options = [(Measurement<UnitPace>, Int, Measurement<UnitPace>)]()
         for factor in humanReadable {
             let increment = Measurement(value: factor / 60.0, unit: labelUnit)
+            // Lower pace is greater in magnitude than upper pace. Starting pace value must be greater than or equal to lower pace. Round up.
             let start = Measurement(value: (lowerPace.value / increment.value).rounded(.up) * increment.value, unit: labelUnit)
             if start >= lowerPace && (start - Double(maximumCount) * increment) <= upperPace {
                 let n = Int(((start - upperPace).value / increment.value).rounded(.up))
