@@ -41,7 +41,7 @@ struct StaticGraphView: View {
             }
     }
 
-    init(data: [DataPoint], xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6], xDimension: Dimension? = nil, yDimension: Dimension? = nil) {
+    init(data: [DataPoint], xRange: (CGFloat, CGFloat), yRange: (CGFloat, CGFloat), showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6], xDimension: Dimension? = nil, yDimension: Dimension? = nil, xDataUnit: Unit? = nil, yDataUnit: Unit? = nil) {
         self.dataPoints = data
         self.showZones = showZones
         self.zoneMaximum = zoneMaximum
@@ -49,6 +49,14 @@ struct StaticGraphView: View {
         switch xDimension {
         case let duration as UnitDuration:
             self.readableXRange = ReadableDurationRange(lower: Measurement(value: xRange.0, unit: duration), upper: Measurement(value: xRange.1, unit: duration))
+        case let pace as UnitPace:
+            if let dataUnit = xDataUnit as? UnitSpeed {
+                self.readableXRange = ReadablePaceRange(lower: Measurement(value: xRange.0, unit: dataUnit),
+                                                        upper: Measurement(value: xRange.1, unit: dataUnit),
+                                                        labelUnit: pace) ?? ReadableRange(lower: xRange.0, upper: xRange.1, count: xLabelCount)
+            } else {
+                self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: xLabelCount)
+            }
         default:
             self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: xLabelCount)
         }
@@ -56,6 +64,14 @@ struct StaticGraphView: View {
         switch yDimension {
         case let duration as UnitDuration:
             self.readableYRange = ReadableDurationRange(lower: Measurement(value: yRange.0, unit: duration), upper: Measurement(value: yRange.1, unit: duration))
+        case let pace as UnitPace:
+            if let dataUnit = yDataUnit as? UnitSpeed {
+                self.readableYRange = ReadablePaceRange(lower: Measurement(value: yRange.0, unit: dataUnit),
+                                                        upper: Measurement(value: yRange.1, unit: dataUnit),
+                                                        labelUnit: pace) ?? ReadableRange(lower: yRange.0, upper: yRange.1, count: yLabelCount)
+            } else {
+                self.readableYRange = ReadableRange(lower: yRange.0, upper: yRange.1, count: yLabelCount)
+            }
         default:
             self.readableYRange = ReadableRange(lower: yRange.0, upper: yRange.1, count: yLabelCount)
         }
@@ -81,5 +97,13 @@ struct StaticGraphView_Previews: PreviewProvider {
                         xRange: (x2.min() ?? 0.0, x2.max() ?? 1.0),
                         yRange: (y2.min() ?? 0.0, y2.max() ?? 1.0),
                         xDimension: UnitDuration.seconds)
+
+        let y3 = x2.map({4.0 + sin($0 / 10 * Double.pi / 180)})
+        StaticGraphView(data: zip(x2, y3).map({ DataPoint(x: $0.0, y: $0.1, color: Color.purple) }),
+                        xRange: (x2.min() ?? 0.0, x2.max() ?? 1.0),
+                        yRange: (y3.min() ?? 0.0, y3.max() ?? 1.0),
+                        xDimension: UnitDuration.seconds,
+                        yDimension: UnitPace.minutesPerMile,
+                        yDataUnit: UnitSpeed.metersPerSecond)
     }
 }
