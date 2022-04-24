@@ -38,11 +38,23 @@ struct DataViewV2: View {
             }
             // Plot data points that are within the current magnification range
             for point in dataPoints {
-                let origin = CGPoint(x: Int((point.x - xRange.0) / (xRange.1 - xRange.0) * size.width),
+                var origin = CGPoint(x: Int((point.x - xRange.0) / (xRange.1 - xRange.0) * size.width),
                                      y: Int(size.height - (point.y - yRange.0) / (yRange.1 - yRange.0) * size.height))
-                context.fill(Path(ellipseIn: CGRect(origin: origin,
-                                                      size: CGSize(width: 3, height: 3))),
-                             with: .color(point.color))
+                if origin.y < 0.0 {
+                    origin.y = 0.0
+                    context.stroke(Path(ellipseIn: CGRect(origin: origin,
+                                                        size: CGSize(width: 3, height: 3))),
+                                   with: .color(.gray))
+                } else if origin.y > size.height {
+                    origin.y = size.height
+                    context.stroke(Path(ellipseIn: CGRect(origin: origin,
+                                                        size: CGSize(width: 3, height: 3))),
+                                   with: .color(.gray))
+                } else {
+                    context.fill(Path(ellipseIn: CGRect(origin: origin,
+                                                        size: CGSize(width: 3, height: 3))),
+                                 with: .color(point.color))
+                }
             }
         }
     }
@@ -52,6 +64,7 @@ struct DataViewV2: View {
         self.xRange = xRange
         self.yRange = yRange
         if showZones {
+            // TODO: Zones do not account for negative data values.
             let yRangeMax = zoneMaximum ?? CGFloat(yRange.1)
             self.zones = zip(stride(from: 100.0, to: 50.0, by: -10.0).map({ yRangeMax * $0 / 100.0}),
                              [Color.red, Color.yellow, Color.green, Color.blue, Color.gray])
@@ -74,6 +87,14 @@ struct DataViewV2_Previews: PreviewProvider {
         let yRange: (CGFloat, CGFloat) = (min(0.0, y.min() ?? 0.0), y.max() ?? 1.0)
         let dataPoints = zip(x, y).map({ DataPoint(x: $0.0, y: $0.1, color: Color.purple) })
         DataViewV2(data: dataPoints, xRange: xRange, yRange: yRange, showZones: true)
+            .padding()
+
+        let x2 = Array(stride(from: 0.0, to: 7000, by: 10.0))
+        let xRange2: (CGFloat, CGFloat) = (x2.min() ?? 0.0, x2.max() ?? 1.0)
+        let y2 = x2.map({ 90 + 100 * sin($0 / 10 * Double.pi / 180) })
+        let yRange2: (CGFloat, CGFloat) = (y2.min() ?? 0.0, y2.max() ?? 1.0)
+        let dataPoints2 = zip(x2, y2).map({ DataPoint(x: $0.0, y: $0.1, color: Color.purple) })
+        DataViewV2(data: dataPoints2, xRange: xRange2, yRange: (yRange2.0 + 0.1 * yRange2.1, 0.9 * yRange2.1), showZones: true)
             .padding()
     }
 }
