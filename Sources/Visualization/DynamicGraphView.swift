@@ -223,9 +223,7 @@ public struct DynamicGraphView: View {
                             }
                         }.frame(maxWidth: .infinity)
                     }
-                    if readableXRange.labelFactor != 1 || readableYRange.labelFactor != 1{
-                        Text("Dimensions: \(readableYRange.labelFactorLabel) by \(readableXRange.labelFactorLabel)")
-                    }
+                    Text("Dimensions: \(readableYRange.labelFactorLabel) by \(readableXRange.labelFactorLabel)")
                 }.padding()
                 Button(action: { isInteracting = false}) {
                     Text("Dismiss")
