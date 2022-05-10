@@ -1,14 +1,14 @@
 import Foundation
 
 public final class UnitPace: Dimension {
-    static let minutesPer200 = UnitPace(symbol: "200m", converter: UnitConverterLinear(coefficient: 1 / 0.2))
-    static let minutesPer400 = UnitPace(symbol: "400m", converter: UnitConverterLinear(coefficient: 1 / 0.4))
-    static let minutesPerKilometer = UnitPace(symbol: "km", converter: UnitConverterLinear(coefficient: 1))
-    static let minutesPerMile = UnitPace(symbol: "mile", converter: UnitConverterLinear(coefficient: 1 / 1.609344))
-    static let minutesPerFiveKilometer = UnitPace(symbol: "5 km", converter: UnitConverterLinear(coefficient: 1 / 5.0))
-    static let minutesPerTenKilometer = UnitPace(symbol: "10 km", converter: UnitConverterLinear(coefficient: 1 / 10.0))
-    static let minutesPerHalfMarathon = UnitPace(symbol: "half marathon", converter: UnitConverterLinear(coefficient: 1 / 21.0975))
-    static let minutesPerMarathon = UnitPace(symbol: "marathon", converter: UnitConverterLinear(coefficient: 1 / 42.195))
+    public static let minutesPer200 = UnitPace(symbol: "200m", converter: UnitConverterLinear(coefficient: 1 / 0.2))
+    public static let minutesPer400 = UnitPace(symbol: "400m", converter: UnitConverterLinear(coefficient: 1 / 0.4))
+    public static let minutesPerKilometer = UnitPace(symbol: "km", converter: UnitConverterLinear(coefficient: 1))
+    public static let minutesPerMile = UnitPace(symbol: "mile", converter: UnitConverterLinear(coefficient: 1 / 1.609344))
+    public static let minutesPerFiveKilometer = UnitPace(symbol: "5 km", converter: UnitConverterLinear(coefficient: 1 / 5.0))
+    public static let minutesPerTenKilometer = UnitPace(symbol: "10 km", converter: UnitConverterLinear(coefficient: 1 / 10.0))
+    public static let minutesPerHalfMarathon = UnitPace(symbol: "half marathon", converter: UnitConverterLinear(coefficient: 1 / 21.0975))
+    public static let minutesPerMarathon = UnitPace(symbol: "marathon", converter: UnitConverterLinear(coefficient: 1 / 42.195))
 
     public static override func baseUnit() -> UnitPace {
         return self.minutesPerKilometer
