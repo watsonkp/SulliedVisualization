@@ -25,7 +25,7 @@ struct ReadablePaceRange: ReadableRangeProtocol {
     let labelFactorLabel: String
 
     // Lesser pace values are greater speeds, so some calculations are negative instead of positive.
-    init?(lower: Measurement<UnitSpeed>, upper: Measurement<UnitSpeed>, labelUnit: UnitPace = UnitPace.minutesPerKilometer) {
+    init?(lower: Measurement<UnitPace>, upper: Measurement<UnitPace>, labelUnit: UnitPace = UnitPace.minutesPerKilometer) {
         // Find a human readable increment that covers the upper and lower values while starting at an integer multiple of the increment and using no more than the specified count of occurences.
         // Ascending order to prefer smallest and most frequent increment.
         let humanReadable = [1.0, 2.0, 5.0, 10.0, 15.0, 30.0,
@@ -33,8 +33,8 @@ struct ReadablePaceRange: ReadableRangeProtocol {
                              3600.0, 2 * 3600.0, 6 * 3600.0, 12 * 3600.0, 24 * 3600.0]
         // Maximum factor of seconds and minutes combined with maximum count of 5 results in switching units after a magnitude of 2.5.
         let maximumCount = 5
-        let lowerPace = UnitPace.fromSpeed(lower).converted(to: labelUnit)
-        let upperPace = UnitPace.fromSpeed(upper).converted(to: labelUnit)
+        let lowerPace = lower.converted(to: labelUnit)
+        let upperPace = upper.converted(to: labelUnit)
         // WARNING: A speed of zero results in a pace of infinity.
         // It's unclear how infinity should be handled to prevent runtime crashes.
         guard lowerPace.value.isFinite && upperPace.value.isFinite else {
@@ -54,18 +54,22 @@ struct ReadablePaceRange: ReadableRangeProtocol {
         }
         let (paceStart, count, paceIncrement) = options.first ?? (lowerPace, 4, (lowerPace - upperPace) / 4.0)
         self.count = count
-        self.start = UnitPace.toSpeed(paceStart).converted(to: lower.unit).value
-        // The distributive property does not apply. Add pace measurements before converting them to a speed measurement.
-        self.end = UnitPace.toSpeed(paceStart - Double(count) * paceIncrement).value
+        self.start = paceStart.value
+        self.end = (paceStart - Double(count) * paceIncrement).value
 
+        let measurementFormatter = MeasurementFormatter()
+        measurementFormatter.unitStyle = .long
         let labelFormatter = DateComponentsFormatter()
         labelFormatter.zeroFormattingBehavior = .pad
         if paceStart <= Measurement(value: 90.0 / 60, unit: labelUnit) {
             labelFormatter.allowedUnits = [.second]
+            self.labelFactorLabel = "seconds / " + measurementFormatter.string(from: labelUnit)
         } else if paceStart <= Measurement(value: 60, unit: labelUnit) {
             labelFormatter.allowedUnits = [.minute, .second]
+            self.labelFactorLabel = "minutes / " + measurementFormatter.string(from: labelUnit)
         } else {
             labelFormatter.allowedUnits = [.hour, .minute]
+            self.labelFactorLabel = "hours / " + measurementFormatter.string(from: labelUnit)
         }
         let secondsStart = Int((paceStart.value * 60.0).rounded())
         let secondsIncrement = Int((paceIncrement.value * 60.0).rounded())
@@ -75,9 +79,6 @@ struct ReadablePaceRange: ReadableRangeProtocol {
         .map({ labelFormatter.string(from: DateComponents(second: $0)) ?? "??:??" })
         self.separators = self.labels.last?.reduce(into: 0, { $0 += $1 == ":" ? 1 : 0 }) ?? 0
         self.integerDigits = self.labels.last?.count ?? 0 - self.separators
-        let measurementFormatter = MeasurementFormatter()
-        measurementFormatter.unitStyle = .long
-        self.labelFactorLabel = measurementFormatter.string(from: labelUnit)
     }
 }
 

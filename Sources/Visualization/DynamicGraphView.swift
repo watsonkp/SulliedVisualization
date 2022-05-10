@@ -81,8 +81,11 @@ public struct DynamicGraphView: View {
     let xRange: (CGFloat, CGFloat)
     let xDimension: Dimension?
     let yDimension: Dimension?
+    let xDataUnit: Unit?
+    let yDataUnit: Unit?
     let readableXRange: ReadableRangeProtocol
     let readableYRange: ReadableRangeProtocol
+    let yVisibleDataRange: (CGFloat, CGFloat)
     var visibleStartIndex: Int {
         get {
             if zoom * partialZoom == 1.0 {
@@ -134,16 +137,14 @@ public struct DynamicGraphView: View {
 
     public var body: some View {
         StaticGraphView(data: dataPoints,
-                        xRange: (readableXRange.start,
-                                 readableXRange.end),
-                        yRange: (readableYRange.start,
-                                 readableYRange.end),
                         showZones: showZones,
                         zoneMaximum: zoneMaximum,
                         xLabelCount: [readableXRange.count],
                         yLabelCount: [readableYRange.count],
                         xDimension: xDimension,
-                        yDimension: yDimension)
+                        yDimension: yDimension,
+                        xDataUnit: xDataUnit,
+                        yDataUnit: yDataUnit)
         .border(Color.accentColor)
         .gesture(TapGesture().onEnded({ value in
             isInteracting = true
@@ -157,8 +158,7 @@ public struct DynamicGraphView: View {
                             ZStack {
                                 DataViewV2(data: dataPoints[visibleStartIndex..<visibleEndIndex],
                                            xRange: visibleXRange,
-                                           yRange: (readableYRange.start,
-                                                    readableYRange.end),
+                                           yRange: yVisibleDataRange,
                                            showZones: showZones,
                                            zoneMaximum: zoneMaximum)
                                 GridLineOverlayView(xTicks: readableXRange.count, yTicks: readableYRange.count)
@@ -235,13 +235,14 @@ public struct DynamicGraphView: View {
     }
 
     // Plot floating point data
-    public init(x: [Double], y: [Double], color: Color = Color.accentColor, showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6], xDimension: Dimension? = nil, yDimension: Dimension? = nil) {
-        self.dataPoints = zip(x, y).map({ DataPoint(x: $0.0, y: $0.1, color: color) })
+    public init(x: [Double], y: [Double], color: Color = Color.accentColor, showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6], xDimension: Dimension? = nil, yDimension: Dimension? = nil, xDataUnit: Dimension? = nil, yDataUnit: Dimension? = nil) {
         self.colors = [color]
+        self.dataPoints = zip(x, y).filter({ $0.0.isFinite && $0.1.isFinite }).map({ DataPoint(x: $0.0, y: $0.1, color: color) })
         // Include x=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
-        self.xRange = (min(0.0, CGFloat(x.min() ?? 0.0)), CGFloat(x.max() ?? 1.0))
+        self.xRange = (CGFloat(x.min() ?? 0.0), CGFloat(x.max() ?? 1.0))
+        let yRange = (CGFloat(y.min() ?? 0.0), CGFloat(y.max() ?? 1.0))
 
-        // Include y=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
+        // Use a range of [0.0, 1.0] when min and max fail due to missing data
         switch xDimension {
         case let duration as UnitDuration:
             self.readableXRange = ReadableDurationRange(lower: Measurement(value: xRange.0, unit: duration), upper: Measurement(value: xRange.1, unit: duration))
@@ -249,15 +250,38 @@ public struct DynamicGraphView: View {
             self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: xLabelCount)
         }
         self.xDimension = xDimension
+        self.xDataUnit = xDataUnit
 
         switch yDimension {
         case let duration as UnitDuration:
-            self.readableYRange = ReadableDurationRange(lower: Measurement(value: min(0.0, CGFloat(y.min() ?? 0.0)), unit: duration),
-                                                        upper: Measurement(value: CGFloat(y.max() ?? 1.0), unit: duration))
+            self.readableYRange = ReadableDurationRange(lower: Measurement(value: min(0.0, yRange.0), unit: duration),
+                                                        upper: Measurement(value: yRange.1, unit: duration))
+        case let pace as UnitPace:
+            if let dataUnit = yDataUnit as? UnitPace {
+                let mean = self.dataPoints.reduce(into: 0.0, { $0 = $0 + $1.y }) / CGFloat(self.dataPoints.count)
+                let σ = sqrt(self.dataPoints.reduce(into: 0.0, { $0 = $0 + pow($1.y - mean, 2.0) }) / CGFloat(self.dataPoints.count))
+                let lower = Measurement(value: mean, unit: dataUnit)
+                let upper = Measurement(value: max(yRange.0, mean - σ), unit: dataUnit)
+                self.readableYRange = ReadablePaceRange(lower: lower,
+                                                        upper: upper,
+                                                        labelUnit: pace) ?? ReadableRange(lower: yRange.1, upper: yRange.0, count: yLabelCount)
+            } else {
+                self.readableYRange = ReadableRange(lower: yRange.1, upper: yRange.0, count: yLabelCount)
+            }
         default:
-            self.readableYRange = ReadableRange(lower: min(0.0, CGFloat(y.min() ?? 0.0)), upper: CGFloat(y.max() ?? 1.0), count: yLabelCount)
+            self.readableYRange = ReadableRange(lower: min(0.0, yRange.0), upper: yRange.1, count: yLabelCount)
         }
+
+        // Scale readable y range start and end when the label unit differs from the data unit
+        if let labelUnit = yDimension, let dataUnit = yDataUnit as? Dimension {
+            self.yVisibleDataRange = (CGFloat(Measurement(value: readableYRange.start, unit: labelUnit).converted(to: dataUnit).value),
+                                      CGFloat(Measurement(value: readableYRange.end, unit: labelUnit).converted(to: dataUnit).value))
+        } else {
+            self.yVisibleDataRange = (readableYRange.start, readableYRange.end)
+        }
+
         self.yDimension = yDimension
+        self.yDataUnit = yDataUnit
 
         self.showZones = showZones
         self.zoneMaximum = zoneMaximum
@@ -266,16 +290,18 @@ public struct DynamicGraphView: View {
     }
 
     // Plot multiple series of floating point data
-    public init(data: [([Double], [Double])], colors: [Color] = [Color.red, Color.green, Color.blue], showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6], xDimension: Dimension? = nil, yDimension: Dimension? = nil) {
+    public init(data: [([Double], [Double])], colors: [Color] = [Color.red, Color.green, Color.blue], showZones: Bool = false, zoneMaximum: Double? = nil, xLabelCount: [Int] = [3, 4], yLabelCount: [Int] = [4, 5, 6], xDimension: Dimension? = nil, yDimension: Dimension? = nil, xDataUnit: Dimension? = nil, yDataUnit: Dimension? = nil) {
         // Repeat the colors array if it is shorter than the data array.
         // Check for an empty colors array
         self.colors = Array(Array(repeating: colors.count > 0 ? colors : [Color.red, Color.green, Color.blue],
                                   count: 1 + data.count / colors.count)
             .reduce(into: [Color](), { $0.append(contentsOf: $1) })[0..<data.count])
         self.dataPoints = DynamicGraphView.createDataPoints(data: data, colors: self.colors)
-        // Include x=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
-        self.xRange = (min(0.0, self.dataPoints.min(by: { $0.x < $1.x })?.x ?? 0.0),
+        // Use a range of [0.0, 1.0] when min and max fail due to missing data
+        self.xRange = (self.dataPoints.min(by: { $0.x < $1.x })?.x ?? 0.0,
                        self.dataPoints.max(by: { $0.x < $1.x })?.x ?? 1.0)
+        let yRange = (self.dataPoints.min(by: { $0.y < $1.y })?.y ?? 0.0,
+                       self.dataPoints.max(by: { $0.y < $1.y })?.y ?? 1.0)
 
         // Include y=0 and use a range of [0.0, 1.0] when min and max fail due to missing data
         let yRangeMax = self.dataPoints.max(by: { $0.y < $1.y })?.y ?? 1.0
@@ -286,15 +312,38 @@ public struct DynamicGraphView: View {
             self.readableXRange = ReadableRange(lower: xRange.0, upper: xRange.1, count: xLabelCount)
         }
         self.xDimension = xDimension
+        self.xDataUnit = xDataUnit
 
         switch yDimension {
         case let duration as UnitDuration:
-            self.readableYRange = ReadableDurationRange(lower: Measurement(value: min(0.0, self.dataPoints.min(by: { $0.y < $1.y })?.y ?? 0.0), unit: duration),
+            self.readableYRange = ReadableDurationRange(lower: Measurement(value: min(0.0, yRange.0), unit: duration),
                                                         upper: Measurement(value: yRangeMax, unit: duration))
+        case let pace as UnitPace:
+            if let dataUnit = yDataUnit as? UnitPace {
+                let mean = self.dataPoints.reduce(into: 0.0, { $0 = $0 + $1.y }) / CGFloat(self.dataPoints.count)
+                let σ = sqrt(self.dataPoints.reduce(into: 0.0, { $0 = $0 + pow($1.y - mean, 2.0) }) / CGFloat(self.dataPoints.count))
+                let lower = Measurement(value: mean, unit: dataUnit)
+                let upper = Measurement(value: max(yRange.0, mean - σ), unit: dataUnit)
+                self.readableYRange = ReadablePaceRange(lower: lower,
+                                                        upper: upper,
+                                                        labelUnit: pace) ?? ReadableRange(lower: yRange.1, upper: yRange.0, count: yLabelCount)
+            } else {
+                self.readableYRange = ReadableRange(lower: yRange.1, upper: yRange.0, count: yLabelCount)
+            }
         default:
             self.readableYRange = ReadableRange(lower: min(0.0, self.dataPoints.min(by: { $0.y < $1.y })?.y ?? 0.0), upper: yRangeMax, count: yLabelCount)
         }
+
+        // Scale readable y range start and end when the label unit differs from the data unit
+        if let labelUnit = yDimension, let dataUnit = yDataUnit as? Dimension {
+            self.yVisibleDataRange = (CGFloat(Measurement(value: readableYRange.start, unit: labelUnit).converted(to: dataUnit).value),
+                                      CGFloat(Measurement(value: readableYRange.end, unit: labelUnit).converted(to: dataUnit).value))
+        } else {
+            self.yVisibleDataRange = (readableYRange.start, readableYRange.end)
+        }
+
         self.yDimension = yDimension
+        self.yDataUnit = yDataUnit
 
         self.showZones = showZones
         self.zoneMaximum = zoneMaximum
@@ -328,7 +377,7 @@ public struct DynamicGraphView: View {
     private static func createDataPoints(data: [([Double], [Double])], colors: [Color]) -> [DataPoint] {
         var dataPoints = [DataPoint]()
         for ((x, y), color) in zip(data, colors) {
-            dataPoints.append(contentsOf: zip(x, y).map({ DataPoint(x: $0.0, y: $0.1, color: color) }))
+            dataPoints.append(contentsOf: zip(x, y).filter({ $0.0.isFinite && $0.1.isFinite }).map({ DataPoint(x: $0.0, y: $0.1, color: color) }))
         }
         return dataPoints
     }
@@ -358,12 +407,16 @@ struct DynamicGraphView_Previews: PreviewProvider {
         let y4 = x2.map({ 1 + sin($0) })
         let y5 = x.map({2 + 1.3 * sin($0)})
         let y6 = x3.map({3000 + 2500 * sin($0 / 10 * Double.pi / 180)})
+        let y7 = x3.map({317.0 / 60 + 32 / 60.0 * sin($0 / 10 * Double.pi / 180)})
         DynamicGraphView(x: x, y: y, showZones: true)
         DynamicGraphView(data: [(x, y), (x2, y4)], showZones: true, zoneMaximum: 4.0)
         DynamicGraphView(x: x, y: y5)
         DynamicGraphView(x: xInt1 + xInt2 + xInt3, y: yInt1 + yInt2 + yInt3, color: Color.purple)
         DynamicGraphView(data: [(xInt1, yInt1), (xInt2, yInt2), (xInt3, yInt3)], colors: [Color.purple, Color.orange])
         DynamicGraphView(x: x3, y: y6, xDimension: UnitDuration.seconds)
+        DynamicGraphView(x: x3, y: y7, xDimension: UnitDuration.seconds, yDimension: UnitPace.minutesPerKilometer, yDataUnit: UnitPace.minutesPerKilometer)
+        DynamicGraphView(x: x3, y: y7, xDimension: UnitDuration.seconds, yDimension: UnitPace.minutesPerMile, yDataUnit: UnitPace.minutesPerKilometer)
+
 
         ScrollView {
             LazyVStack {
