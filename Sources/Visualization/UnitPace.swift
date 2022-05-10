@@ -1,6 +1,6 @@
 import Foundation
 
-final class UnitPace: Dimension {
+public final class UnitPace: Dimension {
     static let minutesPer200 = UnitPace(symbol: "200m", converter: UnitConverterLinear(coefficient: 1 / 0.2))
     static let minutesPer400 = UnitPace(symbol: "400m", converter: UnitConverterLinear(coefficient: 1 / 0.4))
     static let minutesPerKilometer = UnitPace(symbol: "km", converter: UnitConverterLinear(coefficient: 1))
@@ -10,7 +10,7 @@ final class UnitPace: Dimension {
     static let minutesPerHalfMarathon = UnitPace(symbol: "half marathon", converter: UnitConverterLinear(coefficient: 1 / 21.0975))
     static let minutesPerMarathon = UnitPace(symbol: "marathon", converter: UnitConverterLinear(coefficient: 1 / 42.195))
 
-    static override func baseUnit() -> UnitPace {
+    public static override func baseUnit() -> UnitPace {
         return self.minutesPerKilometer
     }
 
