@@ -146,15 +146,15 @@ struct InteractivePositionView: View {
 
 struct InteractivePositionView_Previews: PreviewProvider {
     static var previews: some View {
-//        let xs = [Array(stride(from: 0.0, to: 100.0, by: 5.0)),
-//                  Array(repeating: 100.0, count: 20),
-//                  Array(stride(from: 100.0, to: 0.0, by: -5.0)),
-//                  Array(repeating: 0.0, count: 20)]
-//        let ys = [Array(repeating: 100.0, count: 20),
-//                  Array(stride(from: 100.0, to: 0.0, by: -5.0)),
-//                  Array(repeating: 0.0, count: 20),
-//                  Array(stride(from: 0.0, to: 100.0, by: 5.0))]
-        // TODO: adding the next segment completely breaks gridlines. y == 0?
+        let xs = [Array(stride(from: 0.0, to: 100.0, by: 5.0)),
+                  Array(repeating: 100.0, count: 20),
+                  Array(stride(from: 100.0, to: 0.0, by: -5.0)),
+                  Array(repeating: 0.0, count: 20)]
+        let ys = [Array(repeating: 100.0, count: 20),
+                  Array(stride(from: 100.0, to: 0.0, by: -5.0)),
+                  Array(repeating: 0.0, count: 20),
+                  Array(stride(from: 0.0, to: 100.0, by: 5.0))]
+
         let xs2: [[Double]] = [Array(stride(from: 0.0, to: 25.0, by: 5.0)),
                    Array(repeating: 25.0, count: 5),
                    Array(stride(from: 25.0, to: 75.0, by: 5.0)),
@@ -165,15 +165,15 @@ struct InteractivePositionView_Previews: PreviewProvider {
                    Array(repeating: 75.0, count: 10),
                    Array(stride(from: 75.0, to: 100.0, by: 5.0)),
                    Array(repeating: 100.0, count: 5),
-//                   Array(stride(from: 100.0, to: 75.0, by: -5.0)),
-//                   Array(repeating: 75.0, count: 5),
-//                   Array(stride(from: 75.0, to: 25.0, by: -5.0)),
-//                   Array(repeating: 25.0, count: 5),
-//                   Array(stride(from: 25.0, to: 0.0, by: -5.0)),
-//                   Array(repeating: 0.0, count: 5),
-//                   Array(stride(from: 0.0, to: 25.0, by: 5.0)),
-//                   Array(repeating: 25.0, count: 10),
-//                   Array(stride(from: 25.0, to: 0.0, by: -5.0)),
+                   Array(stride(from: 100.0, to: 75.0, by: -5.0)),
+                   Array(repeating: 75.0, count: 5),
+                   Array(stride(from: 75.0, to: 25.0, by: -5.0)),
+                   Array(repeating: 25.0, count: 5),
+                   Array(stride(from: 25.0, to: 0.0, by: -5.0)),
+                   Array(repeating: 0.0, count: 5),
+                   Array(stride(from: 0.0, to: 25.0, by: 5.0)),
+                   Array(repeating: 25.0, count: 10),
+                   Array(stride(from: 25.0, to: 0.0, by: -5.0)),
                    Array(repeating: 0.0, count: 5)]
         let ys2: [[Double]] = [Array(repeating: 100.0, count: 5),
                    Array(stride(from: 100.0, to: 75.0, by: -5.0)),
@@ -185,17 +185,18 @@ struct InteractivePositionView_Previews: PreviewProvider {
                    Array(stride(from: 75.0, to: 25.0, by: -5.0)),
                    Array(repeating: 25.0, count: 5),
                    Array(stride(from: 25.0, to: 0.0, by: -5.0)),
-//                   Array(repeating: 0.0, count: 5),
-//                   Array(stride(from: 0.0, to: 25.0, by: 5.0)),
-//                   Array(repeating: 25.0, count: 10),
-//                   Array(stride(from: 25.0, to: 0.0, by: -5.0)),
-//                   Array(repeating: 0.0, count: 5),
-//                   Array(stride(from: 0.0, to: 25.0, by: 5.0)),
-//                   Array(repeating: 25.0, count: 5),
-//                   Array(stride(from: 25.0, to: 75.0, by: 5.0)),
-//                   Array(repeating: 75.0, count: 5),
+                   Array(repeating: 0.0, count: 5),
+                   Array(stride(from: 0.0, to: 25.0, by: 5.0)),
+                   Array(repeating: 25.0, count: 10),
+                   Array(stride(from: 25.0, to: 0.0, by: -5.0)),
+                   Array(repeating: 0.0, count: 5),
+                   Array(stride(from: 0.0, to: 25.0, by: 5.0)),
+                   Array(repeating: 25.0, count: 5),
+                   Array(stride(from: 25.0, to: 75.0, by: 5.0)),
+                   Array(repeating: 75.0, count: 5),
                    Array(stride(from: 75.0, to: 100.0, by: 5.0))]
+
         InteractivePositionView(data: [([Double], [Double])](zip(xs2, ys2)))
-//        InteractivePositionView(data: [([Double], [Double])](zip(xs, ys)))
+        InteractivePositionView(data: [([Double], [Double])](zip(xs, ys)))
     }
 }
