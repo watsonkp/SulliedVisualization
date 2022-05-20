@@ -226,4 +226,28 @@
             XCTAssertEqual(UnitPace.toSpeed(Measurement(value: .infinity, unit: .minutesPerKilometer)).converted(to: .kilometersPerHour),
                            Measurement(value: 0.0, unit: .metersPerSecond))
         }
+
+        func testGridlines() {
+            var (major, minor) = GridLineMajorMinorView.gridLinePositions(lower: 20.0, upper: 72.0)
+            XCTAssertEqual(major, [10.0 / 52.0, 20.0 / 52.0, 30.0 / 52.0, 40.0 / 52.0, 50.0 / 52.0])
+            var expectedMinor = [10 / 52.0 - 2 / 52, 10 / 52.0 - 4 / 52, 10 / 52.0 - 6 / 52, 10 / 52.0 - 8 / 52,
+                                 20 / 52.0 - 2 / 52, 20 / 52.0 - 4 / 52, 20 / 52.0 - 6 / 52, 20 / 52.0 - 8 / 52,
+                                 30 / 52.0 - 2 / 52, 30 / 52.0 - 4 / 52, 30 / 52.0 - 6 / 52, 30 / 52.0 - 8 / 52,
+                                 40 / 52.0 - 2 / 52, 40 / 52.0 - 4 / 52, 40 / 52.0 - 6 / 52, 40 / 52.0 - 8 / 52,
+                                 50 / 52.0 - 2 / 52, 50 / 52.0 - 4 / 52, 50 / 52.0 - 6 / 52, 50 / 52.0 - 8 / 52]
+            for (expected, value) in zip(expectedMinor, minor) {
+                VisualizationTests.assertAlmostEqual(expected, value)
+            }
+
+            (major, minor) = GridLineMajorMinorView.gridLinePositions(lower: 0.0, upper: 100.0)
+            XCTAssertEqual(major, [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+            expectedMinor = []
+            for (expected, value) in zip(expectedMinor, minor) {
+                XCTAssertEqual(expected, value)
+            }
+
+            (major, minor) = GridLineMajorMinorView.gridLinePositions(lower: -5.0, upper: 95.0)
+            XCTAssertEqual(major, [0.05])
+            XCTAssertEqual(minor, [0.85, 0.65, 0.45, 0.25])
+        }
     }
