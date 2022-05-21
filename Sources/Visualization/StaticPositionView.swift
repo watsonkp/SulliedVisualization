@@ -1,24 +1,20 @@
 import SwiftUI
 
-struct InteractivePositionView: View {
+struct StaticPositionView: View {
     let points: [DataPoint]
     let xRange: ReadableRange
     let yRange: ReadableRange
-    @GestureState var tempMagnification: CGFloat = 1.0
-    @GestureState var tempTranslation: (CGFloat, CGFloat) = (0.0, 0.0)
-    @State var magnification: CGFloat = 1.0
-    @State var translation: (CGFloat, CGFloat) = (0.0, 0.0)
     var visibleXRange: (CGFloat, CGFloat) {
         get {
-            let width = (xRange.end - xRange.start) / (magnification * tempMagnification)
-            let center = translation.0 + tempTranslation.0 + (xRange.end - xRange.start) / 2
+            let width = (xRange.end - xRange.start)
+            let center = (xRange.end - xRange.start) / 2
             return (center - width / 2, center + width / 2)
         }
     }
     var visibleYRange: (CGFloat, CGFloat) {
         get {
-            let width = (yRange.end - yRange.start) / (magnification * tempMagnification)
-            let center = translation.1 + tempTranslation.1 + (yRange.end - yRange.start) / 2
+            let width = (yRange.end - yRange.start)
+            let center = (yRange.end - yRange.start) / 2
             return (center - width / 2, center + width / 2)
         }
     }
@@ -41,7 +37,6 @@ struct InteractivePositionView: View {
                 .reversed()[0..<yRange.count])
         }
     }
-
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
@@ -64,39 +59,7 @@ struct InteractivePositionView: View {
                                              with: .color(point.color))
                             }
                         }
-                    }.gesture(DragGesture()
-                        .updating($tempTranslation) { value, state, transaction in
-                            var x = -1 * (value.location.x - value.startLocation.x) / magnification
-                            let width = (xRange.end - xRange.start)
-                            x = min(x, width / 2)
-                            x = max(x, -1 * width / 2)
-                            
-                            var y = (value.location.y - value.startLocation.y) / magnification
-                            let height = (yRange.end - yRange.start)
-                            y = min(y, height / 2)
-                            y = max(y, -1 * height / 2)
-                            state = (x, y)
-                        }
-                        .onEnded( { value in
-                            var x = translation.0 - (value.location.x - value.startLocation.x) / magnification
-                            let width = (xRange.end - xRange.start)
-                            x = min(x, width / 2)
-                            x = max(x, -1 * width / 2)
-                            
-                            var y = translation.1 + (value.location.y - value.startLocation.y) / magnification
-                            let height = (yRange.end - yRange.start)
-                            y = min(y, height / 2)
-                            y = max(y, -1 * height / 2)
-                            translation = (x, y)
-                        })
-                    ).gesture(MagnificationGesture()
-                        .updating($tempMagnification) { value, state, transaction in
-                            state = max(value, 1.0)
-                        }
-                        .onEnded( { value in
-                            magnification = max(magnification * value, 1.0)
-                        })
-                    )
+                    }
                 }
             }
             HStack(spacing: 0) {
@@ -150,7 +113,7 @@ struct InteractivePositionView: View {
     }
 }
 
-struct InteractivePositionView_Previews: PreviewProvider {
+struct StaticPositionView_Previews: PreviewProvider {
     static var previews: some View {
         let xs = [Array(stride(from: 0.0, to: 100.0, by: 5.0)),
                   Array(repeating: 100.0, count: 20),
@@ -202,7 +165,7 @@ struct InteractivePositionView_Previews: PreviewProvider {
                    Array(repeating: 75.0, count: 5),
                    Array(stride(from: 75.0, to: 100.0, by: 5.0))]
 
-        InteractivePositionView(data: [([Double], [Double])](zip(xs2, ys2)))
-        InteractivePositionView(data: [([Double], [Double])](zip(xs, ys)))
+        StaticPositionView(data: [([Double], [Double])](zip(xs2, ys2)))
+        StaticPositionView(data: [([Double], [Double])](zip(xs, ys)))
     }
 }
