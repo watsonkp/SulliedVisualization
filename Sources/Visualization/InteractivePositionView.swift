@@ -130,7 +130,7 @@ struct InteractivePositionView: View {
     public init(data rawData: [([Double], [Double])], colors: [Color] = [Color.red, Color.green, Color.blue], isLatLong: Bool = false) {
         var data = rawData
         if isLatLong {
-            data = rawData.map({ Location.project(latitude: $0.0, longitude: $0.1) })
+            data = rawData.map({ Location.project(latitude: $0.1, longitude: $0.0) })
         }
 
         // Repeat the colors array if it is shorter than the data array.
