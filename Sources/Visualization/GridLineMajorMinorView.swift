@@ -62,7 +62,8 @@ struct GridLineMajorMinorView: View {
     static func gridLinePositions(lower: CGFloat, upper: CGFloat) -> ([CGFloat], [CGFloat]) {
         // Major
         let range = abs(upper - lower)
-        var order = CGFloat(signOf: range, magnitudeOf: log10(range)).rounded(.down)
+        let fractionalOrder = log10(range)
+        var order = CGFloat(signOf: fractionalOrder, magnitudeOf: fractionalOrder).rounded(.down)
         var majorIncrement = pow(10.0, order)
         let start = CGFloat(signOf: lower, magnitudeOf: lower / majorIncrement).rounded(.down) * majorIncrement
         var major: [CGFloat] = (0 ..< 11).map({ (start + CGFloat($0) * majorIncrement - lower) / range})
@@ -98,5 +99,6 @@ struct GridLineMajorMinorView_Previews: PreviewProvider {
         GridLineMajorMinorView(xRange: (0, 100), yRange: (5, 100))
         GridLineMajorMinorView(xRange: (20, 82), yRange: (20, 82))
         GridLineMajorMinorView(xRange: (10, 37), yRange: (20, 47))
+        GridLineMajorMinorView(xRange: (0.000, 0.004), yRange: (0.000, 0.002))
     }
 }

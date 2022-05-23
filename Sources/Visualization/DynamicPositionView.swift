@@ -98,5 +98,17 @@ struct DynamicPositionView_Previews: PreviewProvider {
 
         DynamicPositionView(data: [([Double], [Double])](zip(xs2, ys2)))
         DynamicPositionView(data: [([Double], [Double])](zip(xs, ys)))
+
+        let xs3: [[Double]] = [Array(stride(from: 1.380, to: 1.382, by: 0.0001)),
+                               Array(stride(from: 1.382, to: 1.384, by: 0.0001))]
+        let ys3: [[Double]] = [Array(stride(from: 0.840, to: 0.842, by: 0.0001)),
+                               Array(stride(from: 0.842, to: 0.840, by: -0.0001))]
+        DynamicPositionView(data: [([Double], [Double])](zip(xs3, ys3)))
+
+        let xs4: [[Double]] = [Array(stride(from: 0.000, to: 0.002, by: 0.0001)),
+                               Array(stride(from: 0.002, to: 0.004, by: 0.0001))]
+        let ys4: [[Double]] = [Array(stride(from: 0.000, to: 0.002, by: 0.0001)),
+                               Array(stride(from: 0.002, to: 0.000, by: -0.0001))]
+        DynamicPositionView(data: [([Double], [Double])](zip(xs4, ys4)))
     }
 }

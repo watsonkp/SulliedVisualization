@@ -4,53 +4,20 @@ struct StaticPositionView: View {
     let points: [DataPoint]
     let xRange: ReadableRange
     let yRange: ReadableRange
-    var visibleXRange: (CGFloat, CGFloat) {
-        get {
-            let width = (xRange.end - xRange.start)
-            let center = (xRange.end - xRange.start) / 2
-            return (center - width / 2, center + width / 2)
-        }
-    }
-    var visibleYRange: (CGFloat, CGFloat) {
-        get {
-            let width = (yRange.end - yRange.start)
-            let center = (yRange.end - yRange.start) / 2
-            return (center - width / 2, center + width / 2)
-        }
-    }
-    var xLabels: [String] {
-        get {
-            // Need to restrict the labels to the expected count because floating point division can be inconsistent.
-            return Array(stride(from: visibleXRange.0,
-                          to: visibleXRange.1,
-                          by: (visibleXRange.1 - visibleXRange.0) / CGFloat(xRange.count))
-                .map({ String(format: "%.\(xRange.fractionalDigits)f", $0) })[0..<xRange.count])
-        }
-    }
-    var yLabels: [String] {
-        get {
-            // Need to restrict the labels to the expected count because floating point division can be inconsistent.
-            return Array(stride(from: visibleYRange.0,
-                          to: visibleYRange.1,
-                          by: (visibleYRange.1 - visibleYRange.0) / CGFloat(yRange.count))
-                .map({ String(format: "%.\(yRange.fractionalDigits)f", $0) })
-                .reversed()[0..<yRange.count])
-        }
-    }
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                YAxis(labels: yLabels)
+                YAxis(labels: yRange.labels.reversed())
                 GeometryReader { proxy in
                     ZStack {
-                        GridLineMajorMinorView(xRange: visibleXRange, yRange: visibleYRange)
+                        GridLineMajorMinorView(xRange: (xRange.start, xRange.end), yRange: (yRange.start, yRange.end))
                         GridLineOverlayView(xTicks: xRange.count, yTicks: yRange.count)
                         Canvas { context, size in
                             let drawableWidth = size.width - 3
                             let drawableHeight = size.height - 3
                             for point in points {
-                                let origin = CGPoint(x: Int((point.x - visibleXRange.0) / (visibleXRange.1 - visibleXRange.0) * drawableWidth),
-                                                     y: Int(drawableHeight - (point.y - visibleYRange.0) / (visibleYRange.1 - visibleYRange.0) * drawableHeight))
+                                let origin = CGPoint(x: Int((point.x - xRange.start) / (xRange.end - xRange.start) * drawableWidth),
+                                                     y: Int(drawableHeight - (point.y - yRange.start) / (yRange.end - yRange.start) * drawableHeight))
                                 if origin.x < 0.0 || origin.x > drawableWidth || origin.y < 0.0 || origin.y > drawableHeight {
                                     continue
                                 }
@@ -67,7 +34,7 @@ struct StaticPositionView: View {
                            negativePositions: yRange.fractionalDigits,
                            negative: yRange.start < 0)
                 HStack(spacing: 0) {
-                    ForEach(xLabels, id: \.self) { label in
+                    ForEach(xRange.labels, id: \.self) { label in
                         XAxisLabelView(label: label)
                     }
                 }.frame(maxWidth: .infinity)
@@ -167,5 +134,16 @@ struct StaticPositionView_Previews: PreviewProvider {
 
         StaticPositionView(data: [([Double], [Double])](zip(xs2, ys2)))
         StaticPositionView(data: [([Double], [Double])](zip(xs, ys)))
+        let xs4: [[Double]] = [Array(stride(from: 0.000, to: 0.002, by: 0.0001)),
+                               Array(stride(from: 0.002, to: 0.004, by: 0.0001))]
+        let ys4: [[Double]] = [Array(stride(from: 0.000, to: 0.002, by: 0.0001)),
+                               Array(stride(from: 0.002, to: 0.000, by: -0.0001))]
+        StaticPositionView(data: [([Double], [Double])](zip(xs4, ys4)))
+
+        let xs3: [[Double]] = [Array(stride(from: 1.380, to: 1.382, by: 0.0001)),
+                               Array(stride(from: 1.382, to: 1.384, by: 0.0001))]
+        let ys3: [[Double]] = [Array(stride(from: 0.840, to: 0.842, by: 0.0001)),
+                               Array(stride(from: 0.842, to: 0.840, by: -0.0001))]
+        StaticPositionView(data: [([Double], [Double])](zip(xs3, ys3)))
     }
 }

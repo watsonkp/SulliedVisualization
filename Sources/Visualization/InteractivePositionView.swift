@@ -11,14 +11,14 @@ struct InteractivePositionView: View {
     var visibleXRange: (CGFloat, CGFloat) {
         get {
             let width = (xRange.end - xRange.start) / (magnification * tempMagnification)
-            let center = translation.0 + tempTranslation.0 + (xRange.end - xRange.start) / 2
+            let center = translation.0 + tempTranslation.0 + xRange.start + (xRange.end - xRange.start) / 2
             return (center - width / 2, center + width / 2)
         }
     }
     var visibleYRange: (CGFloat, CGFloat) {
         get {
             let width = (yRange.end - yRange.start) / (magnification * tempMagnification)
-            let center = translation.1 + tempTranslation.1 + (yRange.end - yRange.start) / 2
+            let center = translation.1 + tempTranslation.1 + yRange.start + (yRange.end - yRange.start) / 2
             return (center - width / 2, center + width / 2)
         }
     }
@@ -204,5 +204,17 @@ struct InteractivePositionView_Previews: PreviewProvider {
 
         InteractivePositionView(data: [([Double], [Double])](zip(xs2, ys2)))
         InteractivePositionView(data: [([Double], [Double])](zip(xs, ys)))
+
+        let xs3: [[Double]] = [Array(stride(from: 1.380, to: 1.382, by: 0.0001)),
+                               Array(stride(from: 1.382, to: 1.384, by: 0.0001))]
+        let ys3: [[Double]] = [Array(stride(from: 0.840, to: 0.842, by: 0.0001)),
+                               Array(stride(from: 0.842, to: 0.840, by: -0.0001))]
+        InteractivePositionView(data: [([Double], [Double])](zip(xs3, ys3)))
+
+        let xs4: [[Double]] = [Array(stride(from: 0.000, to: 0.002, by: 0.0001)),
+                               Array(stride(from: 0.002, to: 0.004, by: 0.0001))]
+        let ys4: [[Double]] = [Array(stride(from: 0.000, to: 0.002, by: 0.0001)),
+                               Array(stride(from: 0.002, to: 0.000, by: -0.0001))]
+        InteractivePositionView(data: [([Double], [Double])](zip(xs4, ys4)))
     }
 }
