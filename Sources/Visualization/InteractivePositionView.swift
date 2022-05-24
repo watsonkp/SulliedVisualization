@@ -11,14 +11,14 @@ struct InteractivePositionView: View {
     var visibleXRange: (CGFloat, CGFloat) {
         get {
             let width = (xRange.end - xRange.start) / (magnification * tempMagnification)
-            let center = translation.0 + tempTranslation.0 + xRange.start + (xRange.end - xRange.start) / 2
+            let center = (translation.0 + tempTranslation.0) * (xRange.end - xRange.start) + xRange.start + (xRange.end - xRange.start) / 2
             return (center - width / 2, center + width / 2)
         }
     }
     var visibleYRange: (CGFloat, CGFloat) {
         get {
             let width = (yRange.end - yRange.start) / (magnification * tempMagnification)
-            let center = translation.1 + tempTranslation.1 + yRange.start + (yRange.end - yRange.start) / 2
+            let center = (translation.1 + tempTranslation.1) * (yRange.end - yRange.start) + yRange.start + (yRange.end - yRange.start) / 2
             return (center - width / 2, center + width / 2)
         }
     }
@@ -66,27 +66,23 @@ struct InteractivePositionView: View {
                         }
                     }.gesture(DragGesture()
                         .updating($tempTranslation) { value, state, transaction in
-                            var x = -1 * (value.location.x - value.startLocation.x) / magnification
-                            let width = (xRange.end - xRange.start)
-                            x = min(x, width / 2)
-                            x = max(x, -1 * width / 2)
+                            var x = -1 * (value.location.x - value.startLocation.x) / proxy.size.width / magnification
+                            x = min(x, 0.5)
+                            x = max(x, -0.5)
                             
-                            var y = (value.location.y - value.startLocation.y) / magnification
-                            let height = (yRange.end - yRange.start)
-                            y = min(y, height / 2)
-                            y = max(y, -1 * height / 2)
+                            var y = (value.location.y - value.startLocation.y) / proxy.size.height / magnification
+                            y = min(y, 0.5)
+                            y = max(y, -0.5)
                             state = (x, y)
                         }
                         .onEnded( { value in
-                            var x = translation.0 - (value.location.x - value.startLocation.x) / magnification
-                            let width = (xRange.end - xRange.start)
-                            x = min(x, width / 2)
-                            x = max(x, -1 * width / 2)
+                            var x = translation.0 - (value.location.x - value.startLocation.x) / proxy.size.width / magnification
+                            x = min(x, 0.5)
+                            x = max(x, -0.5)
                             
-                            var y = translation.1 + (value.location.y - value.startLocation.y) / magnification
-                            let height = (yRange.end - yRange.start)
-                            y = min(y, height / 2)
-                            y = max(y, -1 * height / 2)
+                            var y = translation.1 + (value.location.y - value.startLocation.y) / proxy.size.height / magnification
+                            y = min(y, 0.5)
+                            y = max(y, -0.5)
                             translation = (x, y)
                         })
                     ).gesture(MagnificationGesture()
