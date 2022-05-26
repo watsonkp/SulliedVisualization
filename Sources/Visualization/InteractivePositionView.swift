@@ -68,7 +68,7 @@ struct InteractivePositionView: View {
                         })
                     ).gesture(MagnificationGesture()
                         .updating($tempMagnification) { value, state, transaction in
-                            state = max(value, 1.0)
+                            state = value
                         }
                         .onEnded( { value in
                             magnification = max(magnification * value, 1.0)
