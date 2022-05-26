@@ -96,6 +96,8 @@
             XCTAssertEqual(range.count, 4)
             XCTAssertEqual(range.labelFactor, 0.000001)
             XCTAssertEqual(range.labels, ["10", "20", "30", "40"])
+            XCTAssertEqual(range.integerDigits, 2)
+            XCTAssertEqual(range.fractionalDigits, 0)
 
             range = ReadableRange(lower: 0.001, upper: 0.012, count: [4, 5, 6])
             XCTAssertEqual(range.start, 0.0)
@@ -103,6 +105,30 @@
             XCTAssertEqual(range.count, 6)
             XCTAssertEqual(range.labelFactor, 1)
             XCTAssertEqual(range.labels, ["0.000", "0.002", "0.004", "0.006", "0.008", "0.010"])
+            XCTAssertEqual(range.integerDigits, 1)
+            XCTAssertEqual(range.fractionalDigits, 3)
+
+            range = ReadableRange(lower: 1.380, upper: 1.384, count: [4])
+            XCTAssertEqual(range.labels, ["1.380", "1.381", "1.382", "1.383"])
+            XCTAssertEqual(range.integerDigits, 1)
+            XCTAssertEqual(range.fractionalDigits, 3)
+            let lower: CGFloat = 1.380 + (1.384 - 1.380) / 2 - (1.384 - 1.380) / 2
+            let upper: CGFloat = 1.380 + (1.384 - 1.380) / 2 + (1.384 - 1.380) / 2
+            XCTAssertEqual(range.labelsForRange(lower: Decimal(lower), upper: Decimal(upper)), ["1.380", "1.381", "1.382", "1.383"])
+
+            range = ReadableRange(lower: 0, upper: 100, count: [5])
+            XCTAssertEqual(range.labelsForRange(lower: 0, upper: 100), ["0", "20", "40", "60", "80"])
+            XCTAssertEqual(range.labelsForRange(lower: 40, upper: 60), ["40", "44", "48", "52", "56"])
+            XCTAssertEqual(range.labelsForRange(lower: 49, upper: 52), ["49.0", "49.6", "50.2", "50.8", "51.4"])
+        }
+
+        func testOrder() {
+            var order = ReadableRange.order(0.84)
+            XCTAssertEqual(order, -1)
+            order = ReadableRange.order(0.84049999999 - 0.84)
+            XCTAssertEqual(order, -4)
+            order = ReadableRange.order(1000000)
+            XCTAssertEqual(order, 7)
         }
 
         func testReadableDurationRange() {

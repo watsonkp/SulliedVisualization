@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Darwin
 
 // TODO: Add a separator property for : or . symbols in labels.
 protocol ReadableRangeProtocol {
@@ -188,7 +189,7 @@ struct ReadableRange: ReadableRangeProtocol {
             for humanFactor in humanIncrements {
                 let roughIncrement = magnitude / Decimal(nIncrements)
                 let order = ReadableRange.order(roughIncrement)
-                let scale = order > 0 ? pow(Decimal(10), order) : 1 / pow(Decimal(10), -1 * order)
+                let scale = order >= 0 ? pow(Decimal(10), order - 1) : 1 / pow(Decimal(10), -1 * order)
                 let increment = humanFactor * scale
                 var roughStart = Decimal(lower) / increment
                 var roundStart = Decimal(signOf: roughStart, magnitudeOf: roughStart)
@@ -207,42 +208,65 @@ struct ReadableRange: ReadableRangeProtocol {
         self.end = CGFloat(truncating: decimalEnd as NSNumber)
 
         // Limit labels to 3 or 4 digits by factoring out 10E(3 * n)
-        let rangeOrder = ReadableRange.order(decimalEnd - decimalStart) / 3 * 3
-        self.labelFactor = rangeOrder >= 0 ? pow(10, rangeOrder) : 1 / pow(10, -1 * rangeOrder + 3)
-        let endOrder = ReadableRange.order(decimalEnd / self.labelFactor)
-        self.integerDigits = endOrder >= 0 ? endOrder + 1 : 1
-        let incrementOrder = ReadableRange.order(increment / self.labelFactor)
-        self.fractionalDigits = incrementOrder >= 0 ? 0 : -1 * incrementOrder
+        let labelOrder = ReadableRange.order(decimalEnd)// / 3 * 3
+        // [1, 2, 3] => 1 (10^0), [4, 5, 6] => 1000 (10^3)
+        if abs(labelOrder) > 3 {
+            // TODO: 0.000001 becomes 1 * 10^-6, 0.0001 becomes 100
+            // TODO: 1000 stays 1000, 1 000 000 becomes 1000. If decimalEnd is from 1.0 decrement
+            let power = labelOrder >= 0 ? 3 + (labelOrder - 3 - 1) / 3 * 3 : 3 + (-1 * labelOrder) / 3 * 3
+            var factor = labelOrder >= 0 ? pow(10, power) : 1 / pow(10, power)
+            // Special case when the end of the range is 1 times the factor so that the labels aren't all fractions.
+            if increment / factor <= 1.0 {
+                factor = labelOrder >= 0 ? pow(10, power - 3) : 1 / pow(10, power - 3)
+            }
+            self.labelFactor = factor
+        } else {
+            self.labelFactor = 1
+        }
 
-        let formatter = NumberFormatter()
-        formatter.minimumFractionDigits = self.fractionalDigits
-        formatter.maximumFractionDigits = self.fractionalDigits
-        self.labels = stride(from: decimalStart / self.labelFactor,
-                             to: decimalEnd / self.labelFactor,
-                             by: increment / self.labelFactor)
-        .map({ formatter.string(from: $0 as NSNumber) ?? "??" })
+        // Calculate the number of integer and fractional digits required to represent the range
+        (self.integerDigits, self.fractionalDigits) = ReadableRange.digitCount(lower: decimalStart / self.labelFactor,
+                                                                               upper: decimalEnd / self.labelFactor,
+                                                                               count: self.count)
+
+        // Format the range of values as a string
+        self.labels = ReadableRange.labelsForRange(lower: decimalStart, upper: decimalEnd, factor: labelFactor, count: self.count)
     }
 
-    private static func order(_ x: Decimal) -> Int {
-        var magnitude = x.magnitude
-        var n = 0
-        if magnitude > 10 {
-            // [10, ∞)
-            while magnitude > 10 {
-                magnitude /= 10
-                n += 1
-            }
-            return n
-        } else if magnitude < 1  && magnitude > 0 {
-            // (0, 1)
-            while magnitude < 1 {
-                magnitude *= 10
-                n += 1
-            }
-            return -n
-        } else {
-            // 0, [1, 10)
-            return n
+    // Calculate the number of digits required to represent a range with a given number of increments
+    private static func digitCount(lower: Decimal, upper: Decimal, count: Int) -> (Int, Int) {
+        let order = ReadableRange.order(max(abs(lower),
+                                            abs(upper)))
+        let increment = (upper - lower) / Decimal(count)
+        let incrementOrder = ReadableRange.order(increment)
+        let integerDigits = order >= 0 ? order : 1
+        let fractionDigits = incrementOrder >= 0 ? 0 : -1 * incrementOrder
+        return (integerDigits, fractionDigits)
+    }
+
+    // Format a range of values using a given factor and number of increments
+    private static func labelsForRange(lower: Decimal, upper: Decimal, factor: Decimal, count: Int) -> [String] {
+        let (_, fractionDigits) = ReadableRange.digitCount(lower: lower / factor, upper: upper / factor, count: count)
+        let formatter = NumberFormatter()
+        formatter.minimumFractionDigits = fractionDigits
+        formatter.maximumFractionDigits = fractionDigits
+        return Array(stride(from: lower / factor,
+                      to: upper / factor,
+                      by: (upper - lower) / factor / Decimal(count))
+            .map({ formatter.string(from: $0 as NSNumber) ?? "??" })[0..<count])
+    }
+
+    // Format a range of values using this instance's factor and number of increments
+    func labelsForRange(lower: Decimal, upper: Decimal) -> [String] {
+        return ReadableRange.labelsForRange(lower: lower, upper: upper, factor: labelFactor, count: count)
+    }
+
+    // Calculate the base 10 order of a given number
+    static func order(_ x: Decimal) -> Int {
+        if x == 0 {
+            return 1
         }
+        let logarithm = log10(Double(truncating: abs(x) as NSNumber)).rounded(.down)
+        return Int(logarithm >= 0.0 ? logarithm + 1 : logarithm)
     }
 }

@@ -22,30 +22,11 @@ struct InteractivePositionView: View {
             return (center - width / 2, center + width / 2)
         }
     }
-    var xLabels: [String] {
-        get {
-            // Need to restrict the labels to the expected count because floating point division can be inconsistent.
-            return Array(stride(from: visibleXRange.0,
-                          to: visibleXRange.1,
-                          by: (visibleXRange.1 - visibleXRange.0) / CGFloat(xRange.count))
-                .map({ String(format: "%.\(xRange.fractionalDigits)f", $0) })[0..<xRange.count])
-        }
-    }
-    var yLabels: [String] {
-        get {
-            // Need to restrict the labels to the expected count because floating point division can be inconsistent.
-            return Array(stride(from: visibleYRange.0,
-                          to: visibleYRange.1,
-                          by: (visibleYRange.1 - visibleYRange.0) / CGFloat(yRange.count))
-                .map({ String(format: "%.\(yRange.fractionalDigits)f", $0) })
-                .reversed()[0..<yRange.count])
-        }
-    }
 
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                YAxis(labels: yLabels)
+                YAxis(labels: yRange.labelsForRange(lower: Decimal(visibleYRange.0), upper: Decimal(visibleYRange.1)).reversed())
                 GeometryReader { proxy in
                     ZStack {
                         GridLineMajorMinorView(xRange: visibleXRange, yRange: visibleYRange)
@@ -100,7 +81,7 @@ struct InteractivePositionView: View {
                            negativePositions: yRange.fractionalDigits,
                            negative: yRange.start < 0)
                 HStack(spacing: 0) {
-                    ForEach(xLabels, id: \.self) { label in
+                    ForEach(xRange.labelsForRange(lower: Decimal(visibleXRange.0), upper: Decimal(visibleXRange.1)), id: \.self) { label in
                         XAxisLabelView(label: label)
                     }
                 }.frame(maxWidth: .infinity)
