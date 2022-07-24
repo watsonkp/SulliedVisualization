@@ -1,7 +1,7 @@
     import XCTest
-    @testable import Visualization
+    @testable import SulliedVisualization
 
-    final class VisualizationTests: XCTestCase {
+    final class SulliedVisualizationTests: XCTestCase {
         static func assertAlmostEqual(_ expression1: Double, _ expression2: Double, precision: Double = 0.001) {
             XCTAssertLessThan(abs(expression1 - expression2) / expression1,
                               precision,
@@ -262,7 +262,7 @@
                                  40 / 52.0 - 2 / 52, 40 / 52.0 - 4 / 52, 40 / 52.0 - 6 / 52, 40 / 52.0 - 8 / 52,
                                  50 / 52.0 - 2 / 52, 50 / 52.0 - 4 / 52, 50 / 52.0 - 6 / 52, 50 / 52.0 - 8 / 52]
             for (expected, value) in zip(expectedMinor, minor) {
-                VisualizationTests.assertAlmostEqual(expected, value)
+                SulliedVisualizationTests.assertAlmostEqual(expected, value)
             }
 
             (major, minor) = GridLineMajorMinorView.gridLinePositions(lower: 0.0, upper: 100.0)
